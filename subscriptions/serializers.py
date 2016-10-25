@@ -31,7 +31,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             node.subsperdayremain = node.subsperday
 
         ''' check if node has remaining subscription this day '''
-        if node.subsperday > len(thisdaysubs):
+        if 0 != node.subsperdayremain:
             return data
         raise serializers.ValidationError('Subscription is limit.')
 

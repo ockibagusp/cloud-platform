@@ -23,7 +23,7 @@ class IsAuthenticated(BasePermission):
     def has_permission(self, request, view):
         is_node = IsNode()
         is_user = IsUser()
-        return is_user.has_permission(request, view) and is_node.has_permission(request, view)
+        return is_node.has_permission(request, view) or is_user.has_permission(request, view)
 
 
 class IsNode(BasePermission):

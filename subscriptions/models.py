@@ -15,4 +15,4 @@ class Subscriptions(models.Model):
         return self.node.label + '_' + self.sensor.label + '@' + str(self.timestamp)
 
     class Meta:
-        ordering = ('node', 'sensor', 'timestamp')
+        ordering = ('node', 'sensor', '-timestamp')

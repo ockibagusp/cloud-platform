@@ -7,7 +7,7 @@ from rest_framework import exceptions
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAuthenticated
 from subscriptions.models import Subscriptions
-from subscriptions.serializers import SubscriptionSerializer
+from subscriptions.serializers import SubscriptionSerializer, SubscriptionFormatSerializer
 from nodes.models import Nodes
 jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
@@ -27,15 +27,19 @@ class SubscriptionsList(APIView):
         if not isinstance(request.user, Nodes):
             raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
 
-        serializer = SubscriptionSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            # FIXME why node and sensor is 'unicode'?
-            ser = serializer.save()
-            return Response(
-                SubscriptionSerializer(ser, context={'request': request}).data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serformat = SubscriptionFormatSerializer(data=request.data)
+        if serformat.is_valid():
+            serializer = SubscriptionSerializer(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                # FIXME why node and sensor is 'unicode'?
+                ser = serializer.save()
+                return Response(
+                    SubscriptionSerializer(ser, context={'request': request}).data,
+                    status=status.HTTP_201_CREATED
+                )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serformat.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SubscriptionDetail(APIView):

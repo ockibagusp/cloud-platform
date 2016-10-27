@@ -1,4 +1,6 @@
+from collections import OrderedDict
 from rest_framework import serializers
+from rest_framework.fields import ListField
 from subscriptions.models import Subscriptions
 from nodes.models import Nodes
 from sensors.models import Sensors
@@ -48,3 +50,44 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         node.subsperdayremain -= 1
         node.save()
         return subs
+
+
+class SubscriptionFormatSerializer(serializers.ModelSerializer):
+    node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
+    sensor = ListField()
+    testing = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = Subscriptions
+        fields = ('node', 'sensor', 'testing')
+
+    """ validating that reffered object sensor is exist. """
+    @staticmethod
+    def issensorexist(nodelabel, sensorlabel):
+        try:
+            return Sensors.objects.get(label=sensorlabel, nodes__label=nodelabel)
+        except Sensors.DoesNotExist:
+            return False
+
+    def validate(self, data):
+        super(SubscriptionFormatSerializer, self).validate(data)
+        errors = OrderedDict()
+        ''' append error when list sensor is empty '''
+        if not data.get('sensor'):
+            errors['sensor'] = "Expected a dict contains \"label\" and \"data\" but got None"
+        else:
+            ''' validating inner sensor dict '''
+            sensorerror = []
+            for index, sensor in enumerate(data.get('sensor')):
+                ''' append error when reffered object sensor is not exist '''
+                if not self.issensorexist(data.get('node').label, sensor.get('label')):
+                    sensorerror.append(
+                        "sensor[%d]: Object with label=%s does not exist." % (index, sensor.get('label'))
+                    )
+            else:
+                if sensorerror:
+                    errors['sensor'] = sensorerror
+
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data

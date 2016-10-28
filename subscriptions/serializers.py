@@ -13,10 +13,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     sensor = serializers.SlugRelatedField(slug_field="label", queryset=Sensors.objects)
     data = serializers.CharField(max_length=128)
     timestamp = serializers.DateTimeField(required=False)
+    testing = serializers.BooleanField(required=False)
 
     class Meta:
         model = Subscriptions
-        fields = ('id', 'node', 'sensor', 'data', 'timestamp')
+        fields = ('id', 'node', 'sensor', 'data', 'timestamp', 'testing')
 
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)
@@ -44,14 +45,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         subs.node = node
         subs.sensor = sensor
         subs.data = validated_data.get('data')
-        subs.save()
+        if not validated_data.get('testing'):
+            subs.save()
         return subs
 
 
 class SubscriptionFormatSerializer(serializers.ModelSerializer):
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     sensor = ListField()
-    testing = serializers.BooleanField(required=False)
+    testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Subscriptions
@@ -92,16 +94,18 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         node = validated_data.get('node')
         sensors = validated_data.get('sensor')
+        istesting = validated_data.get('testing')
         newsensors = []
         for sensor in sensors:
-            data = {'node': node, 'sensor': node.sensors_set.get(label=sensor.get('label')), 'data': sensor.get('data')}
+            data = {'node': node, 'sensor': node.sensors_set.get(label=sensor.get('label')),
+                    'data': sensor.get('data'), 'testing': istesting}
             serializer = SubscriptionSerializer(data=data)
             if serializer.is_valid():
                 subs = serializer.save()
                 newsensors.append(subs)
             else:
                 raise serializers.ValidationError(serializer.errors)
-        else:
+        if not istesting:
             ''' decrement Nodes subsperdayremain '''
             node.subsperdayremain -= 1
             node.save()

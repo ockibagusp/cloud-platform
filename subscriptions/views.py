@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,15 +13,11 @@ from nodes.models import Nodes
 jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
 
-class SubscriptionsList(APIView):
+class SubscriptionsList(generics.ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-
-    @staticmethod
-    def get(request):
-        subs = Subscriptions.objects.all()
-        serializer = SubscriptionSerializer(subs, many=True, context={'request': request})
-        return Response(serializer.data)
+    queryset = Subscriptions.objects.all()
+    serializer_class = SubscriptionSerializer
 
     @staticmethod
     def post(request):

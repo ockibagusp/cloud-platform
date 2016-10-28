@@ -6,10 +6,10 @@ from nodes.models import Nodes
 
 class Sensors(models.Model):
     nodes = models.ForeignKey(Nodes)
-    label = models.CharField(max_length=28)
+    label = models.CharField(max_length=28, unique=True)
 
     def __unicode__(self):
-        return self.nodes.label + '_' + self.label
+        return self.label
 
     class Meta:
         ordering = ('label',)

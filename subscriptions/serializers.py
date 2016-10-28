@@ -44,11 +44,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         subs.node = node
         subs.sensor = sensor
         subs.data = validated_data.get('data')
-        # subs.save()
-
-        ''' decrement Nodes subsperdayremain '''
-        node.subsperdayremain -= 1
-        # node.save()
+        subs.save()
         return subs
 
 
@@ -96,13 +92,9 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         node = validated_data.get('node')
         sensors = validated_data.get('sensor')
-
         newsensors = []
         for sensor in sensors:
-            data = OrderedDict()
-            data['node'] = node
-            data['sensor'] = node.sensors_set.get(label=sensor.get('label')).label
-            data['data'] = sensor.get('data')
+            data = {'node': node, 'sensor': node.sensors_set.get(label=sensor.get('label')), 'data': sensor.get('data')}
             serializer = SubscriptionSerializer(data=data)
             if serializer.is_valid():
                 subs = serializer.save()
@@ -112,5 +104,5 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
         else:
             ''' decrement Nodes subsperdayremain '''
             node.subsperdayremain -= 1
-            # node.save()
+            node.save()
         return newsensors

@@ -44,11 +44,11 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         subs.node = node
         subs.sensor = sensor
         subs.data = validated_data.get('data')
-        subs.save()
+        # subs.save()
 
         ''' decrement Nodes subsperdayremain '''
         node.subsperdayremain -= 1
-        node.save()
+        # node.save()
         return subs
 
 
@@ -62,6 +62,7 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
         fields = ('node', 'sensor', 'testing')
 
     """ validating that reffered object sensor is exist. """
+
     @staticmethod
     def issensorexist(nodelabel, sensorlabel):
         try:
@@ -91,3 +92,25 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
         return data
+
+    def create(self, validated_data):
+        node = validated_data.get('node')
+        sensors = validated_data.get('sensor')
+
+        newsensors = []
+        for sensor in sensors:
+            data = OrderedDict()
+            data['node'] = node
+            data['sensor'] = node.sensors_set.get(label=sensor.get('label')).label
+            data['data'] = sensor.get('data')
+            serializer = SubscriptionSerializer(data=data)
+            if serializer.is_valid():
+                subs = serializer.save()
+                newsensors.append(subs)
+            else:
+                raise serializers.ValidationError(serializer.errors)
+        else:
+            ''' decrement Nodes subsperdayremain '''
+            node.subsperdayremain -= 1
+            # node.save()
+        return newsensors

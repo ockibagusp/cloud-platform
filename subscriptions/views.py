@@ -29,15 +29,11 @@ class SubscriptionsList(APIView):
 
         serformat = SubscriptionFormatSerializer(data=request.data)
         if serformat.is_valid():
-            serializer = SubscriptionSerializer(data=request.data, context={'request': request})
-            if serializer.is_valid():
-                # FIXME why node and sensor is 'unicode'?
-                ser = serializer.save()
-                return Response(
-                    SubscriptionSerializer(ser, context={'request': request}).data,
-                    status=status.HTTP_201_CREATED
-                )
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            data = serformat.save()
+            return Response(
+                SubscriptionSerializer(data, many=True, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
         else:
             return Response(serformat.errors, status=status.HTTP_400_BAD_REQUEST)
 

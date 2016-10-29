@@ -1,17 +1,15 @@
 from django.http import Http404
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from nodes.models import Nodes
 from nodes.serializers import NodeSerializer
 from sensors.serializers import SensorSerializer
 
 
-class NodesList(APIView):
-    @staticmethod
-    def get(request, format=None):
-        nodes = Nodes.objects.all()
-        serializer = NodeSerializer(nodes, many=True, context={'request': request})
-        return Response(serializer.data)
+class NodesList(ListAPIView):
+    queryset = Nodes.objects.all()
+    serializer_class = NodeSerializer
 
 
 class NodeDetail(APIView):

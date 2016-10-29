@@ -7,7 +7,7 @@ from sensors.models import Sensors
 from datetime import date
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     sensor = serializers.SlugRelatedField(slug_field="label", queryset=Sensors.objects)
@@ -17,7 +17,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscriptions
-        fields = ('id', 'node', 'sensor', 'data', 'timestamp', 'testing')
+        fields = ('id', 'url', 'node', 'sensor', 'data', 'timestamp', 'testing')
+        extra_kwargs = {
+            'url': {'view_name': 'subscription-detail', 'lookup_field': 'pk'}
+        }
 
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)

@@ -8,11 +8,12 @@ class SensorSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
     label = serializers.CharField(min_length=4, max_length=28)
     nodes = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
+    # extra field
     nodeurl = serializers.SerializerMethodField(method_name='getnodeurl')
 
     class Meta:
         model = Sensors
-        fields = ('id', 'url', 'nodeurl', 'nodes', 'label',)
+        fields = ('id', 'url', 'nodes', 'nodeurl', 'label',)
 
     def getnodeurl(self, obj):
         return reverse('nodes-detail', args=[obj.nodes.pk], request=self.context['request'])

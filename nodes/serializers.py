@@ -1,10 +1,13 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueValidator
 from nodes.models import Nodes
 
 
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.IntegerField(read_only=True)
+    user = serializers.SlugRelatedField(slug_field="username", queryset=User.objects)
     sensors_list = serializers.HyperlinkedIdentityField(
         view_name='node-sensor-detail',
         lookup_field='pk'
@@ -19,7 +22,7 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Nodes
-        fields = ('id', 'url', 'label', 'secretkey', 'subsperday', 'subsperdayremain', 'sensors_list')
+        fields = ('id', 'url', 'user', 'label', 'secretkey', 'subsperday', 'subsperdayremain', 'sensors_list')
 
     def create(self, validated_data):
         node = Nodes.objects.create(**validated_data)

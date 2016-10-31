@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from rest_framework import serializers
 from rest_framework.fields import ListField
+from rest_framework.reverse import reverse
 from subscriptions.models import Subscriptions
 from nodes.models import Nodes
 from sensors.models import Sensors
@@ -14,13 +15,22 @@ class SubscriptionSerializer(serializers.HyperlinkedModelSerializer):
     data = serializers.CharField(max_length=128)
     timestamp = serializers.DateTimeField(required=False)
     testing = serializers.BooleanField(required=False)
+    # extra field
+    nodeurl = serializers.SerializerMethodField(method_name='getnodeurl')
+    sensorurl = serializers.SerializerMethodField(method_name='getsensorurl')
 
     class Meta:
         model = Subscriptions
-        fields = ('id', 'url', 'node', 'sensor', 'data', 'timestamp', 'testing')
+        fields = ('id', 'url', 'node', 'nodeurl', 'sensor', 'sensorurl', 'data', 'timestamp', 'testing')
         extra_kwargs = {
             'url': {'view_name': 'subscription-detail', 'lookup_field': 'pk'}
         }
+
+    def getnodeurl(self, obj):
+        return reverse('nodes-detail', args=[obj.node.pk], request=self.context['request'])
+
+    def getsensorurl(self, obj):
+        return reverse('sensors-detail', args=[obj.sensor.pk], request=self.context['request'])
 
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)

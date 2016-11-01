@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from rest_framework_jwt.settings import api_settings
 from rest_framework import exceptions
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAuthenticated, IsUser
+from sensors.models import Sensors
 from subscriptions.models import Subscriptions
 from subscriptions.serializers import SubscriptionSerializer, SubscriptionFormatSerializer
 from nodes.models import Nodes
@@ -80,12 +82,23 @@ class SubscriptionFilterNode(ListAPIView):
     permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
+    @staticmethod
+    def checknode(label):
+        """
+        Raise error when Nodes is not exist.
+        """
+        try:
+            return Nodes.objects.get(label=label)
+        except Nodes.DoesNotExist:
+            raise NotFound(detail="Nodes with label=%s does not exist." % label)
+
     def get_queryset(self):
         """
         This view should return a list of all the subscription for
         the node as determined by the node portion of the URL.
         """
         nodelabel = self.kwargs['node']
+        self.checknode(nodelabel)
         return Subscriptions.objects.filter(node__label=nodelabel)
 
 
@@ -98,6 +111,26 @@ class SubscriptionFilterNodeSensor(ListAPIView):
     permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
+    @staticmethod
+    def checknode(label):
+        """
+        Raise error when Nodes is not exist.
+        """
+        try:
+            return Nodes.objects.get(label=label)
+        except Nodes.DoesNotExist:
+            raise NotFound(detail="Nodes with label=%s does not exist." % label)
+
+    @staticmethod
+    def checksensor(label):
+        """
+        Raise error when Sensors is not exist.
+        """
+        try:
+            return Sensors.objects.get(label=label)
+        except Sensors.DoesNotExist:
+            raise NotFound(detail="Sensors with label=%s does not exist." % label)
+
     def get_queryset(self):
         """
         This view should return a list of all the subscription for
@@ -105,4 +138,6 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         """
         nodelabel = self.kwargs['node']
         sensorlabel = self.kwargs['sensor']
+        self.checknode(nodelabel)
+        self.checksensor(sensorlabel)
         return Subscriptions.objects.filter(node__label=nodelabel, sensor__label=sensorlabel)

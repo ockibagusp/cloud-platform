@@ -1,19 +1,20 @@
 from django.http import Http404
-from rest_framework import generics
+from rest_framework.generics import ListAPIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 from rest_framework import exceptions
+from rest_framework.pagination import PageNumberPagination
 from authenticate.authentication import JSONWebTokenAuthentication
-from authenticate.permissions import IsAuthenticated
+from authenticate.permissions import IsAuthenticated, IsUser
 from subscriptions.models import Subscriptions
 from subscriptions.serializers import SubscriptionSerializer, SubscriptionFormatSerializer
 from nodes.models import Nodes
 jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
 
-class SubscriptionsList(generics.ListAPIView):
+class SubscriptionsList(ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = Subscriptions.objects.all()
@@ -51,6 +52,21 @@ class SubscriptionDetail(APIView):
         subs = self.get_object(pk)
         serializer = SubscriptionSerializer(subs, context={'request': request})
         return Response(serializer.data)
+
+
+class SubscriptionFilterUser(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    pagination_class = PageNumberPagination
+    serializer_class = SubscriptionSerializer
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the subscriptions
+        for the currently authenticated user.
+        """
+        user = self.request.user
+        return Subscriptions.objects.filter(node__user=user)
 
 
 class SubscriptionFilter(APIView):

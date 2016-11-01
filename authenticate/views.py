@@ -2,13 +2,36 @@ import jwt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from authenticate.forms import AuthForm
+from rest_framework_jwt.utils import jwt_payload_handler as base_jwt_payload_handler
+from authenticate.forms import AuthForm, LoginForm
 from authenticate.utils import jwt_payload_handler
+from authenticate.serializers import UserSerializer
 from nodes.serializers import NodeSerializer
 from cloud_gateway import settings
 
 
-class TokenCreator(APIView):
+class UserTokenCreator(APIView):
+    """
+    Create token if user credentials was provided and valid.
+    """
+
+    def post(self, request, format=None):
+        form = LoginForm(request.data)
+        if form.is_valid():
+            return Response({
+                'user': UserSerializer(form.user).data,
+                'token': self.create_token(form.user)
+            })
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def create_token(user):
+        payload = base_jwt_payload_handler(user)
+        token = jwt.encode(payload, settings.SECRET_KEY)
+        return token.decode('unicode_escape')
+
+
+class NodeTokenCreator(APIView):
     """
     Create token if node credentials was provided and valid.
     """

@@ -15,15 +15,14 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from rest_framework_jwt.views import obtain_jwt_token
 
-from authenticate.views import TokenCreator
+from authenticate.views import NodeTokenCreator, UserTokenCreator
 
 urlpatterns = [
     url(r'^admin-rahasia/', admin.site.urls),
     url(r'^nodes/', include('nodes.urls')),
     url(r'^sensors/', include('sensors.urls')),
     url(r'^subscriptions/', include('subscriptions.urls')),
-    url(r'^api-auth/', obtain_jwt_token),
-    url(r'^node-auth/$', TokenCreator.as_view()),
+    url(r'^user-auth/', UserTokenCreator.as_view()),
+    url(r'^node-auth/$', NodeTokenCreator.as_view()),
 ]

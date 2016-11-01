@@ -8,7 +8,7 @@ urlpatterns = [
     url(r'^user/(?P<user>\w+)/$', views.SubscriptionFilterUser.as_view(), name="subscription-filter-user"),
     url(r'^node/(?P<node>\w+)/$', views.SubscriptionFilterNode.as_view(),
         name="subscription-filter-node"),
-    url(r'^node/(?P<node>\w+)/sensor/(?P<sensor>\w+)$', views.SubscriptionFilterNodeSensor.as_view(),
+    url(r'^node/(?P<node>\w+)/sensor/(?P<sensor>\w+)/$', views.SubscriptionFilterNodeSensor.as_view(),
         name="subscription-filter-node-sensor"),
 ]
 

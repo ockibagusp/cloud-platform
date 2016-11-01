@@ -17,7 +17,7 @@ class TokenCreator(APIView):
         form = AuthForm(request.data)
         if form.is_valid():
             return Response({
-                'node': NodeSerializer(form.node).data,
+                'node': NodeSerializer(form.node, context={'request': request}).data,
                 'token': self.create_token(form.node)
             })
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)

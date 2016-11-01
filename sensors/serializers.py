@@ -10,13 +10,18 @@ class SensorSerializer(serializers.HyperlinkedModelSerializer):
     nodes = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     # extra field
     nodeurl = serializers.SerializerMethodField(method_name='getnodeurl')
+    subscriptions_list = serializers.SerializerMethodField(method_name='getsubscriptionslist')
 
     class Meta:
         model = Sensors
-        fields = ('id', 'url', 'nodes', 'nodeurl', 'label',)
+        fields = ('id', 'url', 'nodes', 'nodeurl', 'label', 'subscriptions_list')
 
     def getnodeurl(self, obj):
         return reverse('nodes-detail', args=[obj.nodes.pk], request=self.context['request'])
+
+    def getsubscriptionslist(self, obj):
+        return reverse('subscription-filter-node-sensor', args=[obj.nodes.label, obj.label],
+                       request=self.context['request'])
 
     def create(self, validated_data):
         sensor = Sensors.objects.create(**validated_data)

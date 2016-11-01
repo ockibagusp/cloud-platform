@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_jwt.settings import api_settings
 from rest_framework import exceptions
-from rest_framework.pagination import PageNumberPagination
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAuthenticated, IsUser
 from subscriptions.models import Subscriptions
@@ -55,9 +54,12 @@ class SubscriptionDetail(APIView):
 
 
 class SubscriptionFilterUser(ListAPIView):
+    """
+    Retrieve Subscription instance with user filtering.
+    @url /subscriptions/user/<user-username>
+    """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
-    pagination_class = PageNumberPagination
     serializer_class = SubscriptionSerializer
 
     def get_queryset(self):
@@ -69,20 +71,38 @@ class SubscriptionFilterUser(ListAPIView):
         return Subscriptions.objects.filter(node__user=user)
 
 
-class SubscriptionFilter(APIView):
+class SubscriptionFilterNode(ListAPIView):
+    """
+    Retrieve Subscription instance with node filtering.
+    @url /subscriptions/node/<node-label>
+    """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    serializer_class = SubscriptionSerializer
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the subscription for
+        the node as determined by the node portion of the URL.
+        """
+        nodelabel = self.kwargs['node']
+        return Subscriptions.objects.filter(node__label=nodelabel)
+
+
+class SubscriptionFilterNodeSensor(ListAPIView):
     """
     Retrieve Subscription instance with node and sensor filtering.
-    @url /subscriptions/<node-label>/<sensor-label>
+    @url /subscriptions/node/<node-label>/sensor/<sensor-label>
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    serializer_class = SubscriptionSerializer
 
-    @staticmethod
-    def get_object(node, sensor):
-        try:
-            return Subscriptions.objects.filter(node__label=node, sensor__label=sensor)
-        except Subscriptions.DoesNotExist:
-            raise Http404
-
-    def get(self, request, node, sensor, format=None):
-        subs = self.get_object(node, sensor)
-        serializer = SubscriptionSerializer(subs, many=True, context={'request': request})
-        return Response(serializer.data)
+    def get_queryset(self):
+        """
+        This view should return a list of all the subscription for
+        the node as determined by the node portion of the URL.
+        """
+        nodelabel = self.kwargs['node']
+        sensorlabel = self.kwargs['sensor']
+        return Subscriptions.objects.filter(node__label=nodelabel, sensor__label=sensorlabel)

@@ -1,7 +1,7 @@
-from rest_framework.compat import is_authenticated
 from rest_framework.permissions import BasePermission
 from django.contrib.auth.models import AnonymousUser
 from nodes.models import Nodes
+from users.models import User
 
 
 class AllowAny(BasePermission):
@@ -42,4 +42,4 @@ class IsUser(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return not isinstance(request.user, Nodes) and is_authenticated(request.user)
+        return not isinstance(request.user, Nodes) and isinstance(request.user, User)

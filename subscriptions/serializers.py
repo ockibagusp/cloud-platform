@@ -2,42 +2,42 @@ from collections import OrderedDict
 from rest_framework import serializers
 from rest_framework.fields import ListField
 from rest_framework.reverse import reverse
+from rest_framework_mongoengine.serializers import DocumentSerializer
 from subscriptions.models import Subscriptions
 from nodes.models import Nodes
-from sensors.models import Sensors
-from datetime import date
+from datetime import date, datetime
 
 
-class SubscriptionSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+class SubscriptionSerializer(DocumentSerializer):
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
-    sensor = serializers.SlugRelatedField(slug_field="label", queryset=Sensors.objects)
-    data = serializers.CharField(max_length=128)
-    timestamp = serializers.DateTimeField(required=False)
-    testing = serializers.BooleanField(required=False)
     # extra field
+    testing = serializers.BooleanField(required=False)
+    url = serializers.SerializerMethodField()
     nodeurl = serializers.SerializerMethodField(method_name='getnodeurl')
     sensorurl = serializers.SerializerMethodField(method_name='getsensorurl')
 
     class Meta:
         model = Subscriptions
-        fields = ('id', 'url', 'node', 'nodeurl', 'sensor', 'sensorurl', 'data', 'timestamp', 'testing')
-        extra_kwargs = {
-            'url': {'view_name': 'subscription-detail', 'lookup_field': 'pk'}
-        }
+        fields = '__all__'
+
+    def get_url(self, obj):
+        return reverse('subscription-detail', args=[obj.id], request=self.context['request'])
 
     def getnodeurl(self, obj):
         return reverse('nodes-detail', args=[obj.node.pk], request=self.context['request'])
 
     def getsensorurl(self, obj):
-        return reverse('sensors-detail', args=[obj.sensor.pk], request=self.context['request'])
+        return reverse('node-sensor-detail', args=[obj.node.pk, str(obj.sensor)], request=self.context['request'])
 
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)
         node = data.get('node')
         now = date.today()
+        beginday = datetime(now.year, now.month, now.day, 0, 0, 0)
+        endday = datetime(now.year, now.month, now.day, 23, 59, 0)
+
         thisdaysubs = Subscriptions.objects.filter(
-            timestamp__day=now.day, timestamp__month=now.month, timestamp__year=now.year, node__label=node.label
+            timestamp__gte=beginday, timestamp__lte=endday, node=node.id
         )
 
         ''' reset Nodes subsperdayremain '''
@@ -63,7 +63,7 @@ class SubscriptionSerializer(serializers.HyperlinkedModelSerializer):
         return subs
 
 
-class SubscriptionFormatSerializer(serializers.ModelSerializer):
+class SubscriptionFormatSerializer(DocumentSerializer):
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     sensor = ListField()
     testing = serializers.BooleanField(required=False, default=False)
@@ -77,12 +77,13 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
     @staticmethod
     def issensorexist(nodelabel, sensorlabel):
         try:
-            return Sensors.objects.get(label=sensorlabel, nodes__label=nodelabel)
-        except Sensors.DoesNotExist:
+            return Nodes.objects.get(label=nodelabel, sensors__label=sensorlabel)
+        except Nodes.DoesNotExist:
             return False
 
     def validate(self, data):
         super(SubscriptionFormatSerializer, self).validate(data)
+        node = data.get('node')
         errors = OrderedDict()
         ''' append error when list sensor is empty '''
         if not data.get('sensor'):
@@ -90,15 +91,22 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
         else:
             ''' validating inner sensor dict '''
             sensorerror = []
+            labelerror = []
             for index, sensor in enumerate(data.get('sensor')):
                 ''' append error when reffered object sensor is not exist '''
-                if not self.issensorexist(data.get('node').label, sensor.get('label')):
+                if not self.issensorexist(node.label, sensor.get('label')):
                     sensorerror.append(
                         "sensor[%d]: Object with label=%s does not exist." % (index, sensor.get('label'))
+                    )
+                if not sensor.get('data'):
+                    labelerror.append(
+                        "label[%d]: This field may not be null." % index
                     )
             else:
                 if sensorerror:
                     errors['sensor'] = sensorerror
+                if labelerror:
+                    errors['label'] = labelerror
 
         if errors:
             raise serializers.ValidationError(errors)
@@ -110,7 +118,7 @@ class SubscriptionFormatSerializer(serializers.ModelSerializer):
         istesting = validated_data.get('testing')
         newsensors = []
         for sensor in sensors:
-            data = {'node': node, 'sensor': node.sensors_set.get(label=sensor.get('label')),
+            data = {'node': node.label, 'sensor': node.sensors.get(label=sensor.get('label')).id,
                     'data': sensor.get('data'), 'testing': istesting}
             serializer = SubscriptionSerializer(data=data)
             if serializer.is_valid():

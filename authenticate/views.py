@@ -2,9 +2,8 @@ import jwt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_jwt.utils import jwt_payload_handler as base_jwt_payload_handler
 from authenticate.forms import AuthForm, LoginForm
-from authenticate.utils import jwt_payload_handler
+from authenticate.utils import node_jwt_payload_handler, user_jwt_payload_handler
 from authenticate.serializers import UserSerializer
 from nodes.serializers import NodeSerializer
 from cloud_gateway import settings
@@ -26,7 +25,7 @@ class UserTokenCreator(APIView):
 
     @staticmethod
     def create_token(user):
-        payload = base_jwt_payload_handler(user)
+        payload = user_jwt_payload_handler(user)
         token = jwt.encode(payload, settings.SECRET_KEY)
         return token.decode('unicode_escape')
 
@@ -47,7 +46,7 @@ class NodeTokenCreator(APIView):
 
     @staticmethod
     def create_token(node):
-        payload = jwt_payload_handler(node)
+        payload = node_jwt_payload_handler(node)
         token = jwt.encode(payload, settings.SECRET_KEY)
         return token.decode('unicode_escape')
 

@@ -1,18 +1,13 @@
 from django.http import Http404
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_jwt.settings import api_settings
-from rest_framework import exceptions
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAuthenticated, IsUser
-from sensors.models import Sensors
 from subscriptions.models import Subscriptions
 from subscriptions.serializers import SubscriptionSerializer, SubscriptionFormatSerializer
 from nodes.models import Nodes
-jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
 
 class SubscriptionsList(ListAPIView):
@@ -23,8 +18,8 @@ class SubscriptionsList(ListAPIView):
 
     @staticmethod
     def post(request):
-        if not isinstance(request.user, Nodes):
-            raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
+        # if not isinstance(request.user, Nodes):
+        #     raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
 
         serformat = SubscriptionFormatSerializer(data=request.data)
         if serformat.is_valid():
@@ -37,7 +32,7 @@ class SubscriptionsList(ListAPIView):
             return Response(serformat.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SubscriptionDetail(APIView):
+class SubscriptionDetail(GenericAPIView):
     """
     Retrieve, update or delete a Subscription instance.
     """
@@ -46,7 +41,7 @@ class SubscriptionDetail(APIView):
     def get_object(pk):
         try:
             return Subscriptions.objects.get(pk=pk)
-        except Subscriptions.DoesNotExist:
+        except Exception:
             raise Http404
 
     def get(self, request, pk, format=None):
@@ -70,7 +65,13 @@ class SubscriptionFilterUser(ListAPIView):
         for the currently authenticated user.
         """
         user = self.request.user
-        return Subscriptions.objects.filter(node__user=user)
+        nodes = Nodes.objects.filter(user=user)
+        tmp = []
+
+        for node in nodes:
+            for sub in Subscriptions.objects.filter(node=node):
+                tmp.append(sub)
+        return tmp
 
 
 class SubscriptionFilterNode(ListAPIView):
@@ -78,8 +79,6 @@ class SubscriptionFilterNode(ListAPIView):
     Retrieve Subscription instance with node filtering.
     @url /subscriptions/node/<node-label>
     """
-    authentication_classes = (JSONWebTokenAuthentication,)
-    permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
     @staticmethod
@@ -98,8 +97,8 @@ class SubscriptionFilterNode(ListAPIView):
         the node as determined by the node portion of the URL.
         """
         nodelabel = self.kwargs['node']
-        self.checknode(nodelabel)
-        return Subscriptions.objects.filter(node__label=nodelabel)
+        node = self.checknode(nodelabel)
+        return Subscriptions.objects.filter(node=node.id)
 
 
 class SubscriptionFilterNodeSensor(ListAPIView):
@@ -107,29 +106,31 @@ class SubscriptionFilterNodeSensor(ListAPIView):
     Retrieve Subscription instance with node and sensor filtering.
     @url /subscriptions/node/<node-label>/sensor/<sensor-label>
     """
-    authentication_classes = (JSONWebTokenAuthentication,)
-    permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
-    @staticmethod
-    def checknode(label):
+    def checknode(self, node, sensor):
         """
         Raise error when Nodes is not exist.
         """
         try:
-            return Nodes.objects.get(label=label)
+            node = Nodes.objects.get(label=node)
+            sensor = self.checksensor(node, sensor)
+            return {
+                'node': node,
+                'sensor': sensor
+            }
         except Nodes.DoesNotExist:
-            raise NotFound(detail="Nodes with label=%s does not exist." % label)
+            raise NotFound(detail="Nodes with label=%s does not exist." % node)
 
     @staticmethod
-    def checksensor(label):
+    def checksensor(node, sensorlabel):
         """
         Raise error when Sensors is not exist.
         """
         try:
-            return Sensors.objects.get(label=label)
-        except Sensors.DoesNotExist:
-            raise NotFound(detail="Sensors with label=%s does not exist." % label)
+            return node.sensors.get(label=sensorlabel)
+        except Nodes.DoesNotExist:
+            raise NotFound(detail="Sensors with label=%s does not exist." % sensorlabel)
 
     def get_queryset(self):
         """
@@ -138,6 +139,6 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         """
         nodelabel = self.kwargs['node']
         sensorlabel = self.kwargs['sensor']
-        self.checknode(nodelabel)
-        self.checksensor(sensorlabel)
-        return Subscriptions.objects.filter(node__label=nodelabel, sensor__label=sensorlabel)
+
+        node = self.checknode(nodelabel, sensorlabel)
+        return Subscriptions.objects.filter(node=node.get('node').id, sensor=node.get('sensor').id)

@@ -1,9 +1,10 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework_mongoengine.fields import ObjectIdField
 
 
 class UserSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+    id = ObjectIdField()
     username = serializers.CharField(min_length=5, max_length=15)
     password = serializers.CharField(min_length=8, max_length=15, write_only=True)
     email = serializers.CharField(max_length=254, required=True)

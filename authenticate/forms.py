@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from nodes.models import Nodes
+from users.models import User
+from authentication import check_password, make_password
 
 
 class AuthForm(forms.Form):
@@ -24,12 +26,11 @@ class LoginForm(forms.Form):
                                widget=forms.PasswordInput(render_value=False))
 
     def clean(self):
-        user = authenticate(
-            username=self.cleaned_data.get('username'),
-            password=self.cleaned_data.get('password')
-        )
+        try:
+            user = User.objects.get(username=self.cleaned_data.get('username'))
 
-        if user is not None:
-            self.user = user
-            return self.cleaned_data
-        raise forms.ValidationError("Unable to login with provided credentials.")
+            if check_password(self.cleaned_data.get('password'), user.password):
+                self.user = user
+                return self.cleaned_data
+        except User.DoesNotExist:
+            raise forms.ValidationError("Unable to login with provided credentials.")

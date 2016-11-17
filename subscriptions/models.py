@@ -1,18 +1,11 @@
-from __future__ import unicode_literals
-
-from django.db import models
+from mongoengine import Document, ObjectIdField
+from mongoengine import ReferenceField, StringField, DateTimeField, CASCADE
 from nodes.models import Nodes
-from sensors.models import Sensors
+import datetime
 
 
-class Subscriptions(models.Model):
-    node = models.ForeignKey(Nodes)
-    sensor = models.ForeignKey(Sensors)
-    data = models.CharField(max_length=128)
-    timestamp = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        return self.node.label + '_' + self.sensor.label + '@' + str(self.timestamp)
-
-    class Meta:
-        ordering = ('node', 'sensor', '-timestamp')
+class Subscriptions(Document):
+    node = ReferenceField(Nodes, reverse_delete_rule=CASCADE)
+    sensor = ObjectIdField(required=True)
+    data = StringField(max_length=128)
+    timestamp = DateTimeField(default=datetime.datetime.now())

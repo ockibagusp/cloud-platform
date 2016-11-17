@@ -1,16 +1,16 @@
 import jwt
-from django.contrib.auth import get_user_model
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_text, smart_str
 from django.utils.translation import ugettext as _
 from rest_framework import exceptions
 from rest_framework.authentication import (
     BaseAuthentication, get_authorization_header
 )
-from authenticate.utils import jwt_get_label_from_payload_handler
 from rest_framework_jwt.settings import api_settings
+from authenticate.utils import jwt_get_label_from_payload_handler, jwt_get_username_from_payload_handler
 from nodes.models import Nodes
+from users.models import User
+
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
-jwt_get_username_from_payload = api_settings.JWT_PAYLOAD_GET_USERNAME_HANDLER
 
 
 class BaseJSONWebTokenAuthentication(BaseAuthentication):
@@ -47,8 +47,7 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
         Returns an active user that matches the payload's user id and email.
         """
         label = jwt_get_label_from_payload_handler(payload)
-        User = get_user_model()
-        username = jwt_get_username_from_payload(payload)
+        username = jwt_get_username_from_payload_handler(payload)
 
         if label:
             try:
@@ -59,13 +58,9 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
             return node
         elif username:
             try:
-                user = User.objects.get_by_natural_key(username)
+                user = User.objects.get(username=username)
             except User.DoesNotExist:
                 msg = _('Invalid signature.')
-                raise exceptions.AuthenticationFailed(msg)
-
-            if not user.is_active:
-                msg = _('User account is disabled.')
                 raise exceptions.AuthenticationFailed(msg)
             return user
         else:
@@ -107,3 +102,29 @@ class JSONWebTokenAuthentication(BaseJSONWebTokenAuthentication):
         authentication scheme should return `403 Permission Denied` responses.
         """
         return '{0} realm="{1}"'.format(api_settings.JWT_AUTH_HEADER_PREFIX, self.www_authenticate_realm)
+
+
+try:
+    from django.contrib.auth.hashers import check_password, make_password
+except ImportError:
+    """Handle older versions of Django"""
+    from django.utils.hashcompat import md5_constructor, sha_constructor
+
+    def get_hexdigest(algorithm, salt, raw_password):
+        raw_password, salt = smart_str(raw_password), smart_str(salt)
+        if algorithm == 'md5':
+            return md5_constructor(salt + raw_password).hexdigest()
+        elif algorithm == 'sha1':
+            return sha_constructor(salt + raw_password).hexdigest()
+        raise ValueError('Got unknown password algorithm type in password')
+
+    def check_password(raw_password, password):
+        algo, salt, hash = password.split('$')
+        return hash == get_hexdigest(algo, salt, raw_password)
+
+    def make_password(raw_password):
+        from random import random
+        algo = 'sha1'
+        salt = get_hexdigest(algo, str(random()), str(random()))[:5]
+        hash = get_hexdigest(algo, salt, raw_password)
+        return '%s$%s$%s' % (algo, salt, hash)

@@ -1,17 +1,22 @@
 from __future__ import unicode_literals
+import bson
+from mongoengine import StringField, ObjectIdField
+from mongoengine.document import EmbeddedDocument
 
-from django.db import models
-from nodes.models import Nodes
 
+class Sensors(EmbeddedDocument):
+    id = ObjectIdField(default=bson.objectid.ObjectId())
+    label = StringField(max_length=28)
 
-class Sensors(models.Model):
-    nodes = models.ForeignKey(Nodes)
-    label = models.CharField(max_length=28, unique=True)
+    meta = {
+        'indexes': [
+            {
+                'fields': ['-label'],
+                'unique': True,
+                'types': False
+            },
+        ],
+    }
 
     def __unicode__(self):
         return self.label
-
-    class Meta:
-        ordering = ('label',)
-
-

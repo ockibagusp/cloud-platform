@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 import datetime
+
+import mongoengine
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -61,7 +63,7 @@ ROOT_URLCONF = 'cloud_gateway.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'BACKEND': '',
         'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -83,8 +85,7 @@ WSGI_APPLICATION = 'cloud_gateway.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': '',
     }
 }
 
@@ -126,6 +127,9 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# mongoengine.connect(_MONGODB_NAME, host=_MONGODB_DATABASE_HOST)
+mongoengine.connect('cloud_gateway_test', host='127.0.0.1')
 
 REST_FRAMEWORK = {
     # 'DEFAULT_RENDERER_CLASSES': (

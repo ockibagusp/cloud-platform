@@ -1,19 +1,24 @@
-from __future__ import unicode_literals
+from mongoengine.document import Document, EmbeddedDocument
+from mongoengine import StringField, ReferenceField, EmbeddedDocumentListField, IntField, CASCADE, ObjectIdField
+from sensors.models import Sensors
+from users.models import User
+# delete embeded -> Nodes.objects(label="FILKOM_1").update_one(pull__sensors__label="HUMIDITY")
 
-from django.db import models
-from django.contrib.auth.models import User
 
+class Nodes(Document):
+    user = ReferenceField(User, reverse_delete_rule=CASCADE)
+    label = StringField(max_length=28, unique=True, sparse=True)
+    secretkey = StringField(max_length=16)
+    subsperday = IntField(default=0)
+    subsperdayremain = IntField(default=0)
+    sensors = EmbeddedDocumentListField(document_type=Sensors)
 
-class Nodes(models.Model):
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    label = models.CharField(unique=True, max_length=28)
-    secretkey = models.CharField(max_length=16)
-    subsperday = models.IntegerField(default=0)
-    subsperdayremain = models.IntegerField(default=0)
-
-    def __unicode__(self):
-        return self.label
-
-    class Meta:
-        ordering = ('label',)
+    meta = {
+        'indexes': [
+            {
+                'fields': ['-label'],
+                'unique': True,
+                'types': False
+             },
+        ],
+    }

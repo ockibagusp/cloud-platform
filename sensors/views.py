@@ -33,8 +33,9 @@ class SensorsList(ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @staticmethod
-    def post(request, pk):
+    def post(self, request, pk):
+        # validate nodeid in url kwargs
+        self.get_object(pk)
         # TODO batasi julmah sensor dalam satu node
         serializer = SensorSerializer(data=request.data, context={
             'request': request, 'nodeid': pk

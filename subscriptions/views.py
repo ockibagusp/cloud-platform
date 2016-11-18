@@ -133,7 +133,7 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         """
         try:
             return node.sensors.get(label=sensorlabel)
-        except Nodes.DoesNotExist:
+        except Exception:
             raise NotFound(detail="Sensors with label=%s does not exist." % sensorlabel)
 
     def get_queryset(self):

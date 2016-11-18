@@ -1,5 +1,5 @@
 from django.http import Http404
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -65,6 +65,10 @@ class SubscriptionFilterUser(ListAPIView):
         for the currently authenticated user.
         """
         user = self.request.user
+
+        if user.username != self.kwargs.get('user'):
+            raise PermissionDenied(detail="Your credential and URL prefix must be same.")
+
         nodes = Nodes.objects.filter(user=user)
         tmp = []
 

@@ -64,7 +64,7 @@ class SubscriptionSerializer(DocumentSerializer):
 
 
 class SubscriptionFormatSerializer(DocumentSerializer):
-    node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
+    node = serializers.CharField(max_length=28)
     sensor = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
@@ -75,16 +75,28 @@ class SubscriptionFormatSerializer(DocumentSerializer):
     """ validating that reffered object sensor is exist. """
 
     @staticmethod
-    def issensorexist(nodelabel, sensorlabel):
+    def isnodeexist(nodelabel):
         try:
-            return Nodes.objects.get(label=nodelabel, sensors__label=sensorlabel)
+            return Nodes.objects.get(label=nodelabel)
         except Nodes.DoesNotExist:
+            return False
+
+    @staticmethod
+    def issensorexist(nodesensors, sensorlabel):
+        try:
+            return nodesensors.get(label=sensorlabel)
+        except Exception:
             return False
 
     def validate(self, data):
         super(SubscriptionFormatSerializer, self).validate(data)
-        node = data.get('node')
+        node = self.isnodeexist(data.get('node'))
         errors = OrderedDict()
+
+        if not node:
+            errors['node'] = 'Nodes with label=%s does not exist.' % data.get('node')
+            raise serializers.ValidationError(errors)
+
         ''' append error when list sensor is empty '''
         if not data.get('sensor'):
             errors['sensor'] = "Expected a dict contains \"label\" and \"data\" but got None"
@@ -94,7 +106,7 @@ class SubscriptionFormatSerializer(DocumentSerializer):
             labelerror = []
             for index, sensor in enumerate(data.get('sensor')):
                 ''' append error when reffered object sensor is not exist '''
-                if not self.issensorexist(node.label, sensor.get('label')):
+                if not self.issensorexist(node.sensors, sensor.get('label')):
                     sensorerror.append(
                         "sensor[%d]: Object with label=%s does not exist." % (index, sensor.get('label'))
                     )
@@ -113,7 +125,7 @@ class SubscriptionFormatSerializer(DocumentSerializer):
         return data
 
     def create(self, validated_data):
-        node = validated_data.get('node')
+        node = Nodes.objects.get(label=validated_data.get('node'))
         sensors = validated_data.get('sensor')
         istesting = validated_data.get('testing')
         newsensors = []

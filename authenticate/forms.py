@@ -32,5 +32,6 @@ class LoginForm(forms.Form):
             if check_password(self.cleaned_data.get('password'), user.password):
                 self.user = user
                 return self.cleaned_data
+            raise forms.ValidationError("Unable to login with provided credentials.")
         except User.DoesNotExist:
             raise forms.ValidationError("Unable to login with provided credentials.")

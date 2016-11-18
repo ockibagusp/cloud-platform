@@ -78,6 +78,7 @@ class SensorDetail(GenericAPIView):
         data = self.get_node(pk, sensorid)
         node = data.get('node')
         tmp_sensors = data.get('node').sensors
+        self_sensor = Sensors()
 
         # check that label field was defined in the post header
         if 'label' not in request.data:
@@ -87,6 +88,7 @@ class SensorDetail(GenericAPIView):
         for index, sensor in enumerate(node.sensors):
             if str(sensor.id) == sensorid:
                 tmp_sensors[index].label = request.data.get('label')
+                self_sensor = tmp_sensors[index]
                 continue
 
             if sensor.label == request.data.get('label'):
@@ -95,7 +97,7 @@ class SensorDetail(GenericAPIView):
         node.sensors = tmp_sensors
         node.save()
         return Response(SensorSerializer(
-                tmp_sensors, many=True, context={'request': request}
+                self_sensor, context={'request': request, 'nodeid': pk}
             ).data, status=status.HTTP_201_CREATED
         )
 

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from nodes.models import Nodes
 from nodes.serializers import NodeSerializer
+from users.models import User
 
 
 class NodesList(ListAPIView):
@@ -11,7 +12,19 @@ class NodesList(ListAPIView):
     serializer_class = NodeSerializer
 
     @staticmethod
-    def post(request):
+    def check_user(username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return False
+
+    def post(self, request):
+        user = request.data.get('user')
+        if not self.check_user(user):
+            return Response({
+                'user': 'User with username=%s does not exist.' % user
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = NodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
@@ -23,6 +36,13 @@ class NodeDetail(GenericAPIView):
     """
     Retrieve, update or delete a Nodes instance.
     """
+
+    @staticmethod
+    def check_user(username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return False
 
     @staticmethod
     def get_object(pk):
@@ -37,6 +57,12 @@ class NodeDetail(GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
+        user = request.data.get('user')
+        if not self.check_user(user):
+            return Response({
+                'user': 'User with username=%s does not exist.' % user
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         node = self.get_object(pk)
         serializer = NodeSerializer(node, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():

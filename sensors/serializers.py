@@ -20,7 +20,7 @@ class SensorSerializer(EmbeddedDocumentSerializer):
 
     def get_url(self, obj):
         return reverse('node-sensor-detail', args=[
-                self.context.get('nodeid'), obj.label
+                self.context.get('nodeid'), obj.id
             ], request=self.context['request']
         )
 

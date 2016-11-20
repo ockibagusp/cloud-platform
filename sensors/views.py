@@ -36,7 +36,6 @@ class SensorsList(ListAPIView):
     def post(self, request, pk):
         # validate nodeid in url kwargs
         self.get_object(pk)
-        # TODO batasi julmah sensor dalam satu node
         serializer = SensorSerializer(data=request.data, context={
             'request': request, 'nodeid': pk
         })
@@ -102,7 +101,8 @@ class SensorDetail(GenericAPIView):
             ).data, status=status.HTTP_201_CREATED
         )
 
-    @staticmethod
-    def delete(request, pk, sensorid):
+    def delete(self, request, pk, sensorid):
+        # check that nodeid and sensorid is valid
+        self.get_node(pk, sensorid)
         Nodes.objects(pk=pk).update_one(pull__sensors__id=sensorid)
         return Response(status=status.HTTP_204_NO_CONTENT)

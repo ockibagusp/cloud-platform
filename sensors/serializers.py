@@ -26,7 +26,7 @@ class SensorSerializer(EmbeddedDocumentSerializer):
             sensorid = obj.get('id')
 
         return reverse('node-sensor-detail', args=[
-                self.context.get('nodeid'), obj.id
+                self.context.get('nodeid'), sensorid
             ], request=self.context['request']
         )
 

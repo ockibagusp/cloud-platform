@@ -19,6 +19,12 @@ class SensorSerializer(EmbeddedDocumentSerializer):
         fields = '__all__'
 
     def get_url(self, obj):
+        # when serialize existing Sensor obj
+        if isinstance(obj, Sensors):
+            sensorid = obj.id
+        else:  # when create new Sensor obj
+            sensorid = obj.get('id')
+
         return reverse('node-sensor-detail', args=[
                 self.context.get('nodeid'), obj.id
             ], request=self.context['request']
@@ -31,8 +37,14 @@ class SensorSerializer(EmbeddedDocumentSerializer):
         )
 
     def get_subscriptions_list(self, obj):
+        # when serialize existing Sensor obj
+        if isinstance(obj, Sensors):
+            sensorlabel = obj.label
+        else:  # when create new Sensor obj
+            sensorlabel = self.context['request'].data.get('label')
+
         node = Nodes.objects.get(pk=self.context.get('nodeid'))
-        return reverse('subscription-filter-node-sensor', args=[node.label, obj.label],
+        return reverse('subscription-filter-node-sensor', args=[node.label, sensorlabel],
                        request=self.context['request'])
 
     def validate_label(self, value):

@@ -41,10 +41,19 @@ class SensorsList(ListAPIView):
         })
 
         if serializer.is_valid():
-            Nodes.objects(pk=pk).update_one(
+            node = Nodes.objects(pk=pk)
+            node.update_one(
                 push__sensors=Sensors(label=serializer.data.get('label'))
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            """
+            Get sensor data manually and serialize it again.
+            Using serializer.data directly will raise ObjectID error cause
+            EmbededDocument, normally, doesn`t have _id field.
+            """
+            sensor = node.first().sensors.get(label=serializer.data.get('label'))
+            return Response(SensorSerializer(
+                sensor, context={'request': request, 'nodeid': pk}
+            ).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

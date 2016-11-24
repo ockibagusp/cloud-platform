@@ -1,5 +1,5 @@
 from mongoengine.document import Document
-from mongoengine import StringField, EmailField
+from mongoengine import StringField, EmailField, IntField
 
 
 class User(Document):
@@ -8,3 +8,4 @@ class User(Document):
     password = StringField(min_length=8, max_length=128)
     first_name = StringField(max_length=50)
     last_name = StringField(max_length=50)
+    is_admin = IntField(default=0)

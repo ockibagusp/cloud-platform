@@ -43,3 +43,13 @@ class IsUser(BasePermission):
 
     def has_permission(self, request, view):
         return not isinstance(request.user, Nodes) and isinstance(request.user, User)
+
+
+class IsAdmin(BasePermission):
+    """
+    Allows access only to admin users.
+    """
+
+    def has_permission(self, request, view):
+        is_user = IsUser()
+        return is_user.has_permission(request, view) and 1 == request.user.is_admin

@@ -20,6 +20,7 @@ from authenticate.views import NodeTokenCreator, UserTokenCreator
 
 urlpatterns = [
     url(r'^admin-rahasia/', admin.site.urls),
+    url(r'^users/', include('users.urls')),
     url(r'^nodes/', include('nodes.urls')),
     url(r'^subscriptions/', include('subscriptions.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),

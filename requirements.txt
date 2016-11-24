@@ -1,0 +1,7 @@
+pymongo==3.3.1
+Django==1.10.3
+mongoengine==0.10.6
+djangorestframework_jwt==1.8.0
+django_rest_framework_mongoengine==3.3.1
+PyJWT==1.4.2
+djangorestframework==3.5.3

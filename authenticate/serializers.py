@@ -10,7 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.CharField(max_length=254, required=True)
     first_name = serializers.CharField(max_length=30, required=True)
     last_name = serializers.CharField(max_length=30, required=True)
+    is_admin = serializers.IntegerField(default=0)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'password', 'email', 'first_name', 'last_name')
+        fields = ('id', 'username', 'password', 'email', 'first_name', 'last_name', 'is_admin')

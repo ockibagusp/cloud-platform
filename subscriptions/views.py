@@ -81,27 +81,27 @@ class SubscriptionFilterUser(ListAPIView):
 class SubscriptionFilterNode(ListAPIView):
     """
     Retrieve Subscription instance with node filtering.
-    @url /subscriptions/node/<node-label>
+    @url /subscriptions/node/<node-id>
     """
     serializer_class = SubscriptionSerializer
 
     @staticmethod
-    def checknode(label):
+    def checknode(pk):
         """
         Raise error when Nodes is not exist.
         """
         try:
-            return Nodes.objects.get(label=label)
-        except Nodes.DoesNotExist:
-            raise NotFound(detail="Nodes with label=%s does not exist." % label)
+            return Nodes.objects.get(pk=pk)
+        except Exception:
+            raise NotFound(detail="Nodes with id=%s does not exist." % pk)
 
     def get_queryset(self):
         """
         This view should return a list of all the subscription for
         the node as determined by the node portion of the URL.
         """
-        nodelabel = self.kwargs['node']
-        node = self.checknode(nodelabel)
+        nodeid = self.kwargs['node']
+        node = self.checknode(nodeid)
         return Subscriptions.objects.filter(node=node.id)
 
 

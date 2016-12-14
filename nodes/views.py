@@ -2,12 +2,16 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
+from authenticate.authentication import JSONWebTokenAuthentication
+from authenticate.permissions import IsUser
 from nodes.models import Nodes
 from nodes.serializers import NodeSerializer
 from users.models import User
 
 
 class NodesList(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
     queryset = Nodes.objects.all()
     serializer_class = NodeSerializer
 
@@ -17,6 +21,20 @@ class NodesList(ListAPIView):
             return User.objects.get(username=username)
         except User.DoesNotExist:
             return False
+
+    @staticmethod
+    def get_nodes(user):
+        return Nodes.objects.filter(user=user)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_nodes(request.user))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = NodeSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         user = request.data.get('user')

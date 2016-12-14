@@ -53,3 +53,13 @@ class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         is_user = IsUser()
         return is_user.has_permission(request, view) and 1 == request.user.is_admin
+
+
+class IsResearcher(BasePermission):
+    """
+    Allows access only to researcher users.
+    """
+
+    def has_permission(self, request, view):
+        is_user = IsUser()
+        return is_user.has_permission(request, view) and 0 == request.user.is_admin

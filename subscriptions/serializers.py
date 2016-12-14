@@ -15,6 +15,7 @@ class SubscriptionSerializer(DocumentSerializer):
     url = serializers.SerializerMethodField()
     nodeurl = serializers.SerializerMethodField(method_name='getnodeurl')
     sensorurl = serializers.SerializerMethodField(method_name='getsensorurl')
+    sensorlabel = serializers.SerializerMethodField(method_name='getsensorlabel')
 
     class Meta:
         model = Subscriptions
@@ -28,6 +29,11 @@ class SubscriptionSerializer(DocumentSerializer):
 
     def getsensorurl(self, obj):
         return reverse('node-sensor-detail', args=[obj.node.pk, str(obj.sensor)], request=self.context['request'])
+
+    @staticmethod
+    def getsensorlabel(obj):
+        obj.node.sensors.get(id=obj.sensor)
+        return obj.node.sensors.get(id=obj.sensor).label
 
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)

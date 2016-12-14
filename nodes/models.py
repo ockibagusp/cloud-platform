@@ -8,7 +8,7 @@ from users.models import User
 class Nodes(Document):
     user = ReferenceField(User, reverse_delete_rule=CASCADE)
     label = StringField(max_length=28, unique=True, sparse=True)
-    secretkey = StringField(max_length=16)
+    secretkey = StringField(required=True, max_length=16)
     subsperday = IntField(default=0)
     subsperdayremain = IntField(default=0)
     sensors = EmbeddedDocumentListField(document_type=Sensors)

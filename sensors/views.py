@@ -42,6 +42,12 @@ class SensorsList(ListAPIView):
 
         if serializer.is_valid():
             node = Nodes.objects(pk=pk)
+            """
+            New sensors instance will has same ObjectId when
+            they post in same millisecond
+            """
+            from time import sleep
+            sleep(0.2)
             node.update_one(
                 push__sensors=Sensors(label=serializer.data.get('label'))
             )

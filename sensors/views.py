@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from nodes.models import Nodes
 from sensors.models import Sensors
+from subscriptions.models import Subscriptions
 from sensors.serializers import SensorSerializer
 
 
@@ -43,13 +44,12 @@ class SensorsList(ListAPIView):
         if serializer.is_valid():
             node = Nodes.objects(pk=pk)
             """
-            New sensors instance will has same ObjectId when
-            they post in same millisecond
+            ObjectId for new sensor must generate before save the instance
             """
-            from time import sleep
-            sleep(0.2)
+            import bson
+            newid = bson.objectid.ObjectId()
             node.update_one(
-                push__sensors=Sensors(label=serializer.data.get('label'))
+                push__sensors=Sensors(id=newid, label=serializer.data.get('label'))
             )
             """
             Get sensor data manually and serialize it again.

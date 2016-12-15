@@ -117,14 +117,14 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         Raise error when Nodes is not exist.
         """
         try:
-            node = Nodes.objects.get(label=node)
+            node = Nodes.objects.get(pk=node)
             sensor = self.checksensor(node, sensor)
             return {
                 'node': node,
                 'sensor': sensor
             }
         except Nodes.DoesNotExist:
-            raise NotFound(detail="Nodes with label=%s does not exist." % node)
+            raise NotFound(detail="Nodes with id=%s does not exist." % node)
 
     @staticmethod
     def checksensor(node, sensorlabel):
@@ -132,9 +132,9 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         Raise error when Sensors is not exist.
         """
         try:
-            return node.sensors.get(label=sensorlabel)
+            return node.sensors.get(id=sensorlabel)
         except Exception:
-            raise NotFound(detail="Sensors with label=%s does not exist." % sensorlabel)
+            raise NotFound(detail="Sensors with id=%s does not exist." % sensorlabel)
 
     def get_queryset(self):
         """

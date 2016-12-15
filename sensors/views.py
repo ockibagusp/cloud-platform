@@ -120,4 +120,6 @@ class SensorDetail(GenericAPIView):
         # check that nodeid and sensorid is valid
         self.get_node(pk, sensorid)
         Nodes.objects(pk=pk).update_one(pull__sensors__id=sensorid)
+        # delete referer subscription
+        Subscriptions.objects(sensor=sensorid).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

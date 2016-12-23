@@ -46,6 +46,10 @@ class SubscriptionSerializer(DocumentSerializer):
             timestamp__gte=beginday, timestamp__lte=endday, node=node.id
         )
 
+        ''' -1 means node has not subscription limit '''
+        if -1 is node.subsperday:
+            return data
+
         ''' reset Nodes subsperdayremain '''
         if not thisdaysubs:
             node.subsperdayremain = node.subsperday
@@ -147,7 +151,8 @@ class SubscriptionFormatSerializer(DocumentSerializer):
                 raise serializers.ValidationError(serializer.errors)
         if not istesting:
             node = Nodes.objects.get(label=validated_data.get('node'))
-            ''' decrement Nodes subsperdayremain '''
-            node.subsperdayremain -= 1
+            ''' decrement Nodes subsperdayremain when node has subscription limit '''
+            if -1 is not node.subsperday:
+                node.subsperdayremain -= 1
             node.save()
         return newsensors

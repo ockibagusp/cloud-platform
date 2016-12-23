@@ -30,7 +30,7 @@ class NodesList(ListAPIView):
 
     @staticmethod
     def post(request):
-        request.data.update({'user': request.user.us})
+        request.data.update({'user': request.user.username})
         serializer = NodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()

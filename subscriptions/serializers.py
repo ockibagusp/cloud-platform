@@ -49,6 +49,7 @@ class SubscriptionSerializer(DocumentSerializer):
         ''' reset Nodes subsperdayremain '''
         if not thisdaysubs:
             node.subsperdayremain = node.subsperday
+            node.save()
 
         ''' check if node has remaining subscription this day '''
         if 0 != node.subsperdayremain:
@@ -145,6 +146,7 @@ class SubscriptionFormatSerializer(DocumentSerializer):
             else:
                 raise serializers.ValidationError(serializer.errors)
         if not istesting:
+            node = Nodes.objects.get(label=validated_data.get('node'))
             ''' decrement Nodes subsperdayremain '''
             node.subsperdayremain -= 1
             node.save()

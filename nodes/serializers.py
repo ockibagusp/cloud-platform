@@ -1,16 +1,12 @@
 from rest_framework import serializers
 from rest_framework_mongoengine.serializers import DocumentSerializer
-from rest_framework_mongoengine.validators import UniqueValidator
 from nodes.models import Nodes
 from users.models import User
 
 
 class NodeSerializer(DocumentSerializer):
     user = serializers.SlugRelatedField(slug_field="username", queryset=User.objects)
-    label = serializers.CharField(
-        min_length=4, max_length=28,
-        validators=[UniqueValidator(queryset=Nodes.objects.all())]
-    )
+    label = serializers.CharField(min_length=4, max_length=28)
     # extra field
     url = serializers.HyperlinkedIdentityField(
         view_name='nodes-detail',
@@ -26,6 +22,24 @@ class NodeSerializer(DocumentSerializer):
         lookup_field='label',
         lookup_url_kwarg='node'
     )
+
+    def validate_label(self, value):
+        """
+        rest_framework.validators.UniqueValidator can't handle label uniqueness
+        if we just want to avoid the same label for a user but let it for other user
+        :param value: self.label
+        :return: validated value
+        """
+        user = self.context.get('request').user
+        node = Nodes.objects.filter(user=user, label=value)
+
+        # when updating instance
+        if None is not self.instance:
+            if not node or self.instance.label == value:
+                return value
+        elif not node: # when create new instance
+            return value
+        raise serializers.ValidationError("This field must be unique.")
 
     @staticmethod
     def get_sensor_count(obj):

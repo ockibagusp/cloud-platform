@@ -12,7 +12,6 @@ from users.models import User
 class NodesList(ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
-    queryset = Nodes.objects.all()
     serializer_class = NodeSerializer
 
     @staticmethod
@@ -37,6 +36,7 @@ class NodesList(ListAPIView):
         return Response(serializer.data)
 
     def post(self, request):
+        # TODO get user directly using request.user instead of using post data
         user = request.data.get('user')
         if not self.check_user(user):
             return Response({
@@ -54,6 +54,7 @@ class NodeDetail(GenericAPIView):
     """
     Retrieve, update or delete a Nodes instance.
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
 
     @staticmethod
     def check_user(username):

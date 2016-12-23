@@ -15,13 +15,6 @@ class NodesList(ListAPIView):
     serializer_class = NodeSerializer
 
     @staticmethod
-    def check_user(username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist:
-            return False
-
-    @staticmethod
     def get_nodes(user):
         return Nodes.objects.filter(user=user)
 
@@ -35,14 +28,9 @@ class NodesList(ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
-        # TODO get user directly using request.user instead of using post data
-        user = request.data.get('user')
-        if not self.check_user(user):
-            return Response({
-                'user': 'User with username=%s does not exist.' % user
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+    @staticmethod
+    def post(request):
+        request.data.update({'user': request.user.us})
         serializer = NodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()

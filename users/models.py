@@ -14,8 +14,7 @@ class User(Document):
         'indexes': [
             {
                 'fields': ['-username'],
-                'unique': True,
-                'types': False
+                'unique': True
             },
         ],
     }

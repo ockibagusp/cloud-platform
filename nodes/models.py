@@ -1,5 +1,5 @@
-from mongoengine.document import Document, EmbeddedDocument
-from mongoengine import StringField, ReferenceField, EmbeddedDocumentListField, IntField, CASCADE, ObjectIdField
+from mongoengine.document import Document
+from mongoengine import StringField, ReferenceField, EmbeddedDocumentListField, IntField, CASCADE
 from sensors.models import Sensors
 from users.models import User
 # delete embeded -> Nodes.objects(label="FILKOM_1").update_one(pull__sensors__label="HUMIDITY")

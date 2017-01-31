@@ -2,6 +2,8 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
+from authenticate.authentication import JSONWebTokenAuthentication
+from authenticate.permissions import IsUser
 from nodes.models import Nodes
 from sensors.models import Sensors
 from subscriptions.models import Subscriptions
@@ -9,6 +11,8 @@ from sensors.serializers import SensorSerializer
 
 
 class SensorsList(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
     serializer_class = SensorSerializer
 
     @staticmethod
@@ -67,6 +71,8 @@ class SensorDetail(GenericAPIView):
     """
     Retrieve, update or delete a Sensor instance.
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
 
     @staticmethod
     def get_node(node_pk, sensor_id):

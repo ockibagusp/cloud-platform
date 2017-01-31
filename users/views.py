@@ -2,11 +2,15 @@ from django.http import Http404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
+from authenticate.authentication import JSONWebTokenAuthentication
+from authenticate.permissions import IsAdmin
 from users.models import User
 from users.serializers import UserSerializer
 
 
 class UsersList(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAdmin,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -20,6 +24,8 @@ class UsersList(ListAPIView):
 
 
 class UserDetail(GenericAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAdmin,)
 
     @staticmethod
     def get_user(pk):

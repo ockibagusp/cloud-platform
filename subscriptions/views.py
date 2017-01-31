@@ -1,4 +1,5 @@
 from django.http import Http404
+from rest_framework import exceptions
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework import status
@@ -18,8 +19,8 @@ class SubscriptionsList(ListAPIView):
 
     @staticmethod
     def post(request):
-        # if not isinstance(request.user, Nodes):
-        #     raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
+        if not isinstance(request.user, Nodes):
+            raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
 
         serformat = SubscriptionFormatSerializer(data=request.data)
         if serformat.is_valid():
@@ -36,6 +37,8 @@ class SubscriptionDetail(GenericAPIView):
     """
     Retrieve, update or delete a Subscription instance.
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
 
     @staticmethod
     def get_object(pk):
@@ -83,6 +86,8 @@ class SubscriptionFilterNode(ListAPIView):
     Retrieve Subscription instance with node filtering.
     @url /subscriptions/node/<node-id>
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
     @staticmethod
@@ -110,6 +115,8 @@ class SubscriptionFilterNodeSensor(ListAPIView):
     Retrieve Subscription instance with node and sensor filtering.
     @url /subscriptions/node/<node-label>/sensor/<sensor-label>
     """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
     serializer_class = SubscriptionSerializer
 
     def checknode(self, node, sensor):

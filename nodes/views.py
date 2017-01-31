@@ -43,6 +43,7 @@ class NodeDetail(GenericAPIView):
     Retrieve, update or delete a Nodes instance.
     """
     authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
 
     @staticmethod
     def check_user(username):

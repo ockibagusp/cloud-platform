@@ -83,13 +83,11 @@ class NodeDetail(GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
-        user = request.data.get('user')
-        if not self.check_user(user):
-            return Response({
-                'user': 'User with username=%s does not exist.' % user
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         node = self.get_object(pk)
+        if request.user != node.user:
+            return Response({
+                'forbidden': 'You can not update another person node.'
+            }, status=status.HTTP_403_FORBIDDEN)
         serializer = NodeSerializer(node, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()

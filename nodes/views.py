@@ -10,16 +10,34 @@ from users.models import User
 
 
 class NodesList(ListAPIView):
+    """
+    Retrieve  Nodes instance.
+    Every nodes has visibility option: public and private.
+
+    Usage:
+    /               => retrieve all authenticated user nodes
+    /?role=public   => retrieve authenticated user public nodes
+    /?role=private  => retrieve authenticated user private nodes
+    /?role=global   => retrieve all public nodes from other users
+    """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
     serializer_class = NodeSerializer
 
     @staticmethod
-    def get_nodes(user):
-        return Nodes.objects.filter(user=user)
+    def get_nodes(user, role=None):
+        if not role:
+            return Nodes.objects.filter(user=user)
+        else:
+            if 'global' == role:
+                return Nodes.objects.filter(user__ne=user, is_public=1)
+            elif 'public' == role:
+                return Nodes.objects.filter(user=user, is_public=1)
+            else:  # private
+                return Nodes.objects.filter(user=user, is_public=0)
 
     def get(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_nodes(request.user))
+        queryset = self.filter_queryset(self.get_nodes(request.user, request.GET.get('role')))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = NodeSerializer(page, many=True, context={'request': request})

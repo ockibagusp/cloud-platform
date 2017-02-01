@@ -100,5 +100,9 @@ class NodeDetail(GenericAPIView):
 
     def delete(self, request, pk, format=None):
         node = self.get_object(pk)
+        if request.user != node.user:
+            return Response({
+                'forbidden': 'You can not delete another person node.'
+            }, status=status.HTTP_403_FORBIDDEN)
         node.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

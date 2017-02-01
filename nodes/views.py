@@ -90,7 +90,7 @@ class NodeDetail(GenericAPIView):
         node = self.get_object(pk)
         if request.user != node.user:
             return Response({
-                'forbidden': 'You can not update another person node.'
+                'detail': 'You can not update another person node.'
             }, status=status.HTTP_403_FORBIDDEN)
         serializer = NodeSerializer(node, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
@@ -102,7 +102,7 @@ class NodeDetail(GenericAPIView):
         node = self.get_object(pk)
         if request.user != node.user:
             return Response({
-                'forbidden': 'You can not delete another person node.'
+                'detail': 'You can not delete another person node.'
             }, status=status.HTTP_403_FORBIDDEN)
         node.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

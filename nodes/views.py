@@ -79,6 +79,10 @@ class NodeDetail(GenericAPIView):
 
     def get(self, request, pk, format=None):
         node = self.get_object(pk)
+        if request.user != node.user and 0 == node.is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
         serializer = NodeSerializer(node, context={'request': request})
         return Response(serializer.data)
 

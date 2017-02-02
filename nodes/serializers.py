@@ -58,6 +58,7 @@ class NodeSerializer(DocumentSerializer):
     def update(self, instance, validated_data):
         instance.label = validated_data.get('label', instance.label)
         instance.secretkey = validated_data.get('secretkey', instance.secretkey)
+        instance.is_public = validated_data.get('is_public', instance.is_public)
         instance.subsperday = validated_data.get('subsperday', instance.subsperday)
         instance.subsperdayremain = validated_data.get('subsperday', instance.subsperday)
         instance.save()

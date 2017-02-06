@@ -1,11 +1,10 @@
 from django import forms
-from django.contrib.auth import authenticate
 from nodes.models import Nodes
 from users.models import User
-from authentication import check_password, make_password
+from authentication import check_password
 
 
-class AuthForm(forms.Form):
+class NodeAuthForm(forms.Form):
     label = forms.CharField(label=u'Label')
     secretkey = forms.CharField(label=u'Secret Key')
 
@@ -20,7 +19,7 @@ class AuthForm(forms.Form):
             raise forms.ValidationError("Node authenticate failure.")
 
 
-class LoginForm(forms.Form):
+class UserAuthForm(forms.Form):
     username = forms.CharField(label=u'Username')
     password = forms.CharField(label=u'Password',
                                widget=forms.PasswordInput(render_value=False))

@@ -2,7 +2,7 @@ import jwt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from authenticate.forms import AuthForm, LoginForm
+from authenticate.forms import NodeAuthForm, UserAuthForm
 from authenticate.utils import node_jwt_payload_handler, user_jwt_payload_handler
 from authenticate.serializers import UserSerializer
 from nodes.serializers import NodeSerializer
@@ -15,7 +15,7 @@ class UserTokenCreator(APIView):
     """
 
     def post(self, request, format=None):
-        form = LoginForm(request.data)
+        form = UserAuthForm(request.data)
         if form.is_valid():
             return Response({
                 'user': UserSerializer(form.user).data,
@@ -36,7 +36,7 @@ class NodeTokenCreator(APIView):
     """
 
     def post(self, request, format=None):
-        form = AuthForm(request.data)
+        form = NodeAuthForm(request.data)
         if form.is_valid():
             return Response({
                 'node': NodeSerializer(form.node, context={'request': request}).data,

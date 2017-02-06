@@ -51,7 +51,7 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
 
         if label:
             try:
-                node = Nodes.objects.get(label=label)
+                node = Nodes.objects.get(id=payload.get('id'))
             except Nodes.DoesNotExist:
                 msg = _('Invalid signature.')
                 raise exceptions.AuthenticationFailed(msg)

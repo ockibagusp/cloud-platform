@@ -64,13 +64,6 @@ class NodeDetail(GenericAPIView):
     permission_classes = (IsUser,)
 
     @staticmethod
-    def check_user(username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist:
-            return False
-
-    @staticmethod
     def get_object(pk):
         try:
             return Nodes.objects.get(pk=pk)

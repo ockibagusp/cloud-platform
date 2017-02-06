@@ -5,17 +5,20 @@ from authentication import check_password
 
 
 class NodeAuthForm(forms.Form):
+    user = forms.CharField(label=u'User')
     label = forms.CharField(label=u'Label')
     secretkey = forms.CharField(label=u'Secret Key')
 
     def clean(self):
         try:
+            user = User.objects.get(username=self.cleaned_data.get('user'))
             self.node = Nodes.objects.get(
+                user=user.id,
                 label=self.cleaned_data.get('label'),
                 secretkey=self.cleaned_data.get('secretkey')
             )
             return self.node
-        except Nodes.DoesNotExist:
+        except (Nodes.DoesNotExist, User.DoesNotExist):
             raise forms.ValidationError("Node authenticate failure.")
 
 

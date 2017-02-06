@@ -19,6 +19,7 @@ class SubscriptionsList(ListAPIView):
 
     @staticmethod
     def post(request):
+        # ensure that only nodes(provided by JWT credentials) can perform this action
         if not isinstance(request.user, Nodes):
             raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
 

@@ -5,6 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from subscriptions.models import Subscriptions
 from nodes.models import Nodes
+from users.models import User
 from datetime import date, datetime
 
 
@@ -75,20 +76,30 @@ class SubscriptionSerializer(DocumentSerializer):
 
 
 class SubscriptionFormatSerializer(DocumentSerializer):
+    user = serializers.CharField(max_length=28)
     node = serializers.CharField(max_length=28)
     sensor = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Subscriptions
-        fields = ('node', 'sensor', 'testing')
+        fields = ('user', 'node', 'sensor', 'testing')
 
-    """ validating that reffered object sensor is exist. """
+    """ ensure that reffered object user is exist. """
 
     @staticmethod
-    def isnodeexist(nodelabel):
+    def isuserexist(username):
         try:
-            return Nodes.objects.get(label=nodelabel)
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return False
+
+    """ ensure that reffered object sensor is exist. """
+
+    @staticmethod
+    def isnodeexist(nodelabel, userid):
+        try:
+            return Nodes.objects.get(user=userid, label=nodelabel)
         except Nodes.DoesNotExist:
             return False
 
@@ -101,11 +112,17 @@ class SubscriptionFormatSerializer(DocumentSerializer):
 
     def validate(self, data):
         super(SubscriptionFormatSerializer, self).validate(data)
-        node = self.isnodeexist(data.get('node'))
         errors = OrderedDict()
 
+        user = self.isuserexist(data.get('user'))
+        if not user:
+            errors['user'] = 'User with username=%s does not exist.' % data.get('user')
+            raise serializers.ValidationError(errors)
+
+        node = self.isnodeexist(data.get('node'), user.id)
         if not node:
-            errors['node'] = 'Nodes with label=%s does not exist.' % data.get('node')
+            errors['node'] = "Nodes with label=%s does not exist. " \
+                             "Or ensure that 'user' and 'node' field is match" % data.get('node')
             raise serializers.ValidationError(errors)
 
         ''' append error when list sensor is empty '''

@@ -29,18 +29,17 @@ def node_jwt_payload_handler(node):
 
 
 def user_jwt_payload_handler(user):
-    username = user.username
-
     payload = {
         'user_id': str(user.pk),
         'email': user.email,
-        'username': username,
+        'username': user.username,
+        'is_admin': user.is_admin,
         'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
     }
     if isinstance(user.pk, uuid.UUID):
         payload['user_id'] = str(user.pk)
 
-    payload['username'] = username
+    payload['username'] = user.username
 
     # Include original issued at time for a brand new token,
     # to allow token refresh

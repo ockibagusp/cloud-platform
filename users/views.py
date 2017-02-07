@@ -41,6 +41,11 @@ class UserDetail(GenericAPIView):
 
     def put(self, request, pk):
         user = self.get_user(pk)
+        # ensure that super admin only edited by him/his self
+        if "webmaster" == user.username:
+            return Response({
+                'detail': 'You can not update super admin user data.'
+            }, status=status.HTTP_403_FORBIDDEN)
         serializer = UserSerializer(user, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -49,5 +54,10 @@ class UserDetail(GenericAPIView):
 
     def delete(self, request, pk):
         user = self.get_user(pk)
+        # super admin can not be deleted
+        if "webmaster" == user.username:
+            return Response({
+                'detail': 'Super admin can not be deleted.'
+            }, status=status.HTTP_403_FORBIDDEN)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

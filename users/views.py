@@ -9,10 +9,43 @@ from users.serializers import UserSerializer
 
 
 class UsersList(ListAPIView):
+    """
+    Retrieve  Users instance.
+    There are 2 types of user: Admin and Researcher.
+
+    Usage:
+    /                   => retrieve both admin and researcher users
+    /?type=admin        => retrieve admin users
+    /?type=researcher   => retrieve researcher users
+
+    NB:
+    incorrect type params will return empty data.
+    """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAdmin,)
-    queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    @staticmethod
+    def get_users(role=None):
+        if not role:
+            return User.objects.all()
+        else:
+            if 'admin' == role:
+                return User.objects.filter(is_admin=1)
+            elif 'researcher' == role:
+                return User.objects.filter(is_admin=0)
+            else:
+                return []
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_users(request.GET.get('type')))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = UserSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @staticmethod
     def post(request):

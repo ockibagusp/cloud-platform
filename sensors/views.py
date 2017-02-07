@@ -24,11 +24,18 @@ class SensorsList(ListAPIView):
 
     def get_queryset(self):
         node = self.get_object(self.kwargs.get('pk'))
-        return node.sensors
+        return node
 
     def get(self, request, *args, **kwargs):
+        # return node query set
         queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
+        # no access to another user private node
+        if request.user != queryset.user and 0 == queryset.is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        page = self.paginate_queryset(queryset.sensors)
         if page is not None:
             serializer = SensorSerializer(page, many=True, context={
                 'request': request, 'nodeid': kwargs.get('pk')
@@ -40,7 +47,13 @@ class SensorsList(ListAPIView):
 
     def post(self, request, pk):
         # validate nodeid in url kwargs
-        self.get_object(pk)
+        node = self.get_object(pk)
+        # no access to another user private node
+        if request.user != node.user and 0 == node.is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
         serializer = SensorSerializer(data=request.data, context={
             'request': request, 'nodeid': pk
         })
@@ -88,6 +101,12 @@ class SensorDetail(GenericAPIView):
 
     def get(self, request, pk, sensorid):
         data = self.get_node(pk, sensorid)
+        # no access to another user private node
+        if request.user != data.get('node').user and 0 == data.get('node').is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
         serializer = SensorSerializer(data.get('sensor'), context={'request': request, 'nodeid': pk})
         return Response(serializer.data)
 
@@ -98,6 +117,12 @@ class SensorDetail(GenericAPIView):
         """
         data = self.get_node(pk, sensorid)
         node = data.get('node')
+        # no access to another user private node
+        if request.user != node.user and 0 == node.is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
         tmp_sensors = data.get('node').sensors
         self_sensor = Sensors()
 
@@ -124,7 +149,13 @@ class SensorDetail(GenericAPIView):
 
     def delete(self, request, pk, sensorid):
         # check that nodeid and sensorid is valid
-        self.get_node(pk, sensorid)
+        data = self.get_node(pk, sensorid)
+        # no access to another user private node
+        if request.user != data.get('node').user and 0 == data.get('node').is_public:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
         Nodes.objects(pk=pk).update_one(pull__sensors__id=sensorid)
         # delete referer subscription
         Subscriptions.objects(sensor=sensorid).delete()

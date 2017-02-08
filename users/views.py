@@ -94,3 +94,17 @@ class UserDetail(GenericAPIView):
             }, status=status.HTTP_403_FORBIDDEN)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ResearcherRegistration(GenericAPIView):
+    serializer_class = UserSerializer
+
+    @staticmethod
+    def post(request):
+        # ensure that new user has role researcher, they can't override this field.
+        request.data.update({'is_admin': 0})
+        serializer = UserSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

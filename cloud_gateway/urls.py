@@ -17,6 +17,7 @@ from django.conf.urls import url, include
 from django.contrib import admin
 
 from authenticate.views import NodeTokenCreator, UserTokenCreator
+from users.views import ResearcherRegistration
 
 urlpatterns = [
     url(r'^admin-rahasia/', admin.site.urls),
@@ -25,4 +26,5 @@ urlpatterns = [
     url(r'^subscriptions/', include('subscriptions.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),
     url(r'^node-auth/$', NodeTokenCreator.as_view()),
+    url(r'^register/$', ResearcherRegistration.as_view())
 ]

@@ -108,7 +108,25 @@ class SubscriptionFilterNode(ListAPIView):
         """
         nodeid = self.kwargs['node']
         node = self.checknode(nodeid)
+        if self.request.user != node.user and 0 == node.is_public:
+            return 'unauthorized'
         return Subscriptions.objects.filter(node=node.id)
+
+    def get(self, request, *args, **kwargs):
+        raw_queryset = self.get_queryset()
+        print raw_queryset
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SubscriptionSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class SubscriptionFilterNodeSensor(ListAPIView):
@@ -152,5 +170,23 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         nodelabel = self.kwargs['node']
         sensorlabel = self.kwargs['sensor']
 
-        node = self.checknode(nodelabel, sensorlabel)
-        return Subscriptions.objects.filter(node=node.get('node').id, sensor=node.get('sensor').id)
+        node_sensor = self.checknode(nodelabel, sensorlabel)
+        if self.request.user != node_sensor.get('node').user and 0 == node_sensor.get('node').is_public:
+            return 'unauthorized'
+        return Subscriptions.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
+
+    def get(self, request, *args, **kwargs):
+        raw_queryset = self.get_queryset()
+        print raw_queryset
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SubscriptionSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

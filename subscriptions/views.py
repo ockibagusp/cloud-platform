@@ -114,7 +114,6 @@ class SubscriptionFilterNode(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
-        print raw_queryset
         if 'unauthorized' == raw_queryset:
             return Response({
                 'detail': 'Not found.'
@@ -177,7 +176,6 @@ class SubscriptionFilterNodeSensor(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
-        print raw_queryset
         if 'unauthorized' == raw_queryset:
             return Response({
                 'detail': 'Not found.'

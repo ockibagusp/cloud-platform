@@ -58,6 +58,19 @@ class SubscriptionFilterUser(ListAPIView):
     """
     Retrieve Subscription instance with user filtering.
     @url /subscriptions/user/<user-username>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
@@ -76,8 +89,22 @@ class SubscriptionFilterUser(ListAPIView):
         nodes = Nodes.objects.filter(user=user)
         tmp = []
 
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
         for node in nodes:
-            for sub in Subscriptions.objects.filter(node=node):
+            if filter_from and filter_last :
+                all_subs = Subscriptions.objects.filter(
+                    node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
+                )
+            elif filter_from:
+                all_subs = Subscriptions.objects.filter(node=node, timestamp__gte=filter_from)
+            elif filter_last:
+                all_subs = Subscriptions.objects.filter(node=node, timestamp__lte=filter_last)
+            else:
+                all_subs = Subscriptions.objects.filter(node=node)
+
+            for sub in all_subs:
                 tmp.append(sub)
         return tmp
 
@@ -86,6 +113,19 @@ class SubscriptionFilterNode(ListAPIView):
     """
     Retrieve Subscription instance with node filtering.
     @url /subscriptions/node/<node-id>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
@@ -110,7 +150,20 @@ class SubscriptionFilterNode(ListAPIView):
         node = self.checknode(nodeid)
         if self.request.user != node.user and 0 == node.is_public:
             return 'unauthorized'
-        return Subscriptions.objects.filter(node=node.id)
+
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
+        if filter_from and filter_last:
+            return Subscriptions.objects.filter(
+                node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
+            )
+        elif filter_from:
+            return Subscriptions.objects.filter(node=node, timestamp__gte=filter_from)
+        elif filter_last:
+            return Subscriptions.objects.filter(node=node, timestamp__lte=filter_last)
+        else:
+            return Subscriptions.objects.filter(node=node)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -132,6 +185,19 @@ class SubscriptionFilterNodeSensor(ListAPIView):
     """
     Retrieve Subscription instance with node and sensor filtering.
     @url /subscriptions/node/<node-label>/sensor/<sensor-label>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
@@ -172,7 +238,27 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         node_sensor = self.checknode(nodelabel, sensorlabel)
         if self.request.user != node_sensor.get('node').user and 0 == node_sensor.get('node').is_public:
             return 'unauthorized'
-        return Subscriptions.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
+
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
+        if filter_from and filter_last:
+            return Subscriptions.objects.filter(
+                node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
+                timestamp__gte=filter_from, timestamp__lte=filter_last
+            )
+        elif filter_from:
+            return Subscriptions.objects.filter(
+                node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
+                timestamp__gte=filter_from
+            )
+        elif filter_last:
+            return Subscriptions.objects.filter(
+                node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
+                timestamp__lte=filter_last
+            )
+        else:
+            return Subscriptions.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()

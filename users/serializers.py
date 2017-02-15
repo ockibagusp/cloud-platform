@@ -9,7 +9,7 @@ class UserSerializer(DocumentSerializer):
     # override
     username = serializers.CharField(
         min_length=4, max_length=16,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all(), message="Already taken!")]
     )
     password = serializers.CharField(max_length=16, write_only=True)
     # extra field

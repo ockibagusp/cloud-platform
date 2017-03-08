@@ -39,22 +39,10 @@ class SubscriptionSerializer(DocumentSerializer):
     def validate(self, data):
         super(SubscriptionSerializer, self).validate(data)
         node = data.get('node')
-        now = date.today()
-        beginday = datetime(now.year, now.month, now.day, 0, 0, 0)
-        endday = datetime(now.year, now.month, now.day, 23, 59, 0)
-
-        thisdaysubs = Subscriptions.objects.filter(
-            timestamp__gte=beginday, timestamp__lte=endday, node=node.id
-        )
 
         ''' -1 means node has not subscription limit '''
         if -1 is node.subsperday:
             return data
-
-        ''' reset Nodes subsperdayremain '''
-        if not thisdaysubs:
-            node.subsperdayremain = node.subsperday
-            node.save()
 
         ''' check if node has remaining subscription this day '''
         if 0 != node.subsperdayremain:

@@ -14,13 +14,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url, include
-from django.contrib import admin
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from authenticate.views import NodeTokenCreator, UserTokenCreator
 from users.views import ResearcherRegistration
 
+
+@api_view(['GET'])
+def welcome(request):
+    return Response({"message": "Welcome to AgriHub API!"})
+
 urlpatterns = [
-    url(r'^admin-rahasia/', admin.site.urls),
+    url(r'^$', welcome),
     url(r'^users/', include('users.urls')),
     url(r'^nodes/', include('nodes.urls')),
     url(r'^subscriptions/', include('subscriptions.urls')),

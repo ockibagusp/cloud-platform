@@ -27,7 +27,7 @@ SECRET_KEY = '%980l0kn&zsg49*c0nd77sq5@!zc*vc!m5&&fg-txh=xn8oy!2'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '192.168.56.101', '192.168.43.227']
 
 
 # Application definition
@@ -129,11 +129,15 @@ USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
 
 # mongoengine.connect(_MONGODB_NAME, host=_MONGODB_DATABASE_HOST)
-mongoengine.connect('cloud_gateway_test', host='127.0.0.1')
+mongoengine.connect('agrihub', host='127.0.0.1')
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

@@ -23,7 +23,7 @@ class SubscriptionsList(ListAPIView):
         if not isinstance(request.user, Nodes):
             raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
 
-        serformat = SubscriptionFormatSerializer(data=request.data)
+        serformat = SubscriptionFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():
             data = serformat.save()
             return Response(

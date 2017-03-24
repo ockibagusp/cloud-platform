@@ -5,8 +5,6 @@ from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from subscriptions.models import Subscriptions
 from nodes.models import Nodes
-from users.models import User
-from datetime import date, datetime
 
 
 class SubscriptionSerializer(DocumentSerializer):
@@ -64,35 +62,24 @@ class SubscriptionSerializer(DocumentSerializer):
 
 
 class SubscriptionFormatSerializer(DocumentSerializer):
-    user = serializers.CharField(max_length=28)
-    node = serializers.CharField(max_length=28)
-    sensor = ListField()
+    publish = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Subscriptions
-        fields = ('user', 'node', 'sensor', 'testing')
-
-    """ ensure that reffered object user is exist. """
-
-    @staticmethod
-    def isuserexist(username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist:
-            return False
+        fields = ('publish', 'testing')
 
     """ ensure that reffered object sensor is exist. """
 
     @staticmethod
-    def isnodeexist(nodelabel, userid):
+    def get_node(node):
         try:
-            return Nodes.objects.get(user=userid, label=nodelabel)
+            return Nodes.objects.get(id=node.id)
         except Nodes.DoesNotExist:
             return False
 
     @staticmethod
-    def issensorexist(nodesensors, sensorlabel):
+    def get_node_sensor(nodesensors, sensorlabel):
         try:
             return nodesensors.get(label=sensorlabel)
         except Exception:
@@ -102,29 +89,20 @@ class SubscriptionFormatSerializer(DocumentSerializer):
         super(SubscriptionFormatSerializer, self).validate(data)
         errors = OrderedDict()
 
-        user = self.isuserexist(data.get('user'))
-        if not user:
-            errors['user'] = 'User with username=%s does not exist.' % data.get('user')
-            raise serializers.ValidationError(errors)
-
-        node = self.isnodeexist(data.get('node'), user.id)
-        if not node:
-            errors['node'] = "Nodes with label=%s does not exist. " \
-                             "Or ensure that 'user' and 'node' field is match" % data.get('node')
-            raise serializers.ValidationError(errors)
+        node = self.get_node(self.context.get('request').user)
 
         ''' append error when list sensor is empty '''
-        if not data.get('sensor'):
-            errors['sensor'] = "Expected a dict contains \"label\" and \"data\" but got None"
+        if not data.get('publish'):
+            errors['publish'] = "Expected a dict contains \"sensor\" and \"data\" but got None"
         else:
-            ''' validating inner sensor dict '''
+            ''' validating inner publish dict '''
             sensorerror = []
             labelerror = []
-            for index, sensor in enumerate(data.get('sensor')):
+            for index, sensor in enumerate(data.get('publish')):
                 ''' append error when reffered object sensor is not exist '''
-                if not self.issensorexist(node.sensors, sensor.get('label')):
+                if not self.get_node_sensor(node.sensors, sensor.get('sensor')):
                     sensorerror.append(
-                        "sensor[%d]: Object with label=%s does not exist." % (index, sensor.get('label'))
+                        "sensor[%d]: Object with label=%s does not exist." % (index, sensor.get('sensor'))
                     )
                 if not sensor.get('data'):
                     labelerror.append(
@@ -141,13 +119,13 @@ class SubscriptionFormatSerializer(DocumentSerializer):
         return data
 
     def create(self, validated_data):
-        node = Nodes.objects.get(label=validated_data.get('node'))
-        sensors = validated_data.get('sensor')
+        node = self.get_node(self.context.get('request').user)
+        publishes = validated_data.get('publish')
         istesting = validated_data.get('testing')
         newsensors = []
-        for sensor in sensors:
-            data = {'node': node.label, 'sensor': node.sensors.get(label=sensor.get('label')).id,
-                    'data': sensor.get('data'), 'testing': istesting}
+        for publish in publishes:
+            data = {'node': node.label, 'sensor': node.sensors.get(label=publish.get('sensor')).id,
+                    'data': publish.get('data'), 'testing': istesting}
             serializer = SubscriptionSerializer(data=data)
             if serializer.is_valid():
                 subs = serializer.save()
@@ -155,7 +133,6 @@ class SubscriptionFormatSerializer(DocumentSerializer):
             else:
                 raise serializers.ValidationError(serializer.errors)
         if not istesting:
-            node = Nodes.objects.get(label=validated_data.get('node'))
             ''' decrement Nodes subsperdayremain when node has subscription limit '''
             if -1 is not node.subsperday:
                 node.subsperdayremain -= 1

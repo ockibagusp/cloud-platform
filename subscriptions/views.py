@@ -27,7 +27,7 @@ class SubscriptionsList(ListAPIView):
         if serformat.is_valid():
             data = serformat.save()
             return Response(
-                SubscriptionSerializer(data, many=True, context={'request': request}).data,
+                { "results": SubscriptionSerializer(data, many=True, context={'request': request}).data },
                 status=status.HTTP_201_CREATED
             )
         else:

@@ -34,19 +34,6 @@ class SubscriptionSerializer(DocumentSerializer):
         obj.node.sensors.get(id=obj.sensor)
         return obj.node.sensors.get(id=obj.sensor).label
 
-    def validate(self, data):
-        super(SubscriptionSerializer, self).validate(data)
-        node = data.get('node')
-
-        ''' -1 means node has not subscription limit '''
-        if -1 is node.subsperday:
-            return data
-
-        ''' check if node has remaining subscription this day '''
-        if 0 != node.subsperdayremain:
-            return data
-        raise serializers.ValidationError('Subscription is limit.')
-
     def create(self, validated_data):
         node = validated_data.get('node')
         sensor = validated_data.get('sensor')

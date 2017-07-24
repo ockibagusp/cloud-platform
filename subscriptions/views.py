@@ -21,7 +21,10 @@ class SubscriptionsList(ListAPIView):
     def post(request):
         # ensure that only nodes(provided by JWT credentials) can perform this action
         if not isinstance(request.user, Nodes):
-            raise exceptions.AuthenticationFailed("You do not have permission to perform this action.")
+            raise exceptions.PermissionDenied("You do not have permission to perform this action.")
+	
+	if 0 == request.user.subsperdayremain:
+	    raise exceptions.PermissionDenied("Publish is limit.")
 
         serformat = SubscriptionFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():

@@ -6,16 +6,16 @@ from rest_framework import status
 from rest_framework.response import Response
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAuthenticated, IsUser
-from subscriptions.models import Subscriptions
-from subscriptions.serializers import SubscriptionSerializer, SubscriptionFormatSerializer
+from sensordatas.models import Sensordatas
+from sensordatas.serializers import SensordataSerializer, SensordataFormatSerializer
 from nodes.models import Nodes
 
 
 class SubscriptionsList(ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-    queryset = Subscriptions.objects.all()
-    serializer_class = SubscriptionSerializer
+    queryset = Sensordatas.objects.all()
+    serializer_class = SensordataSerializer
 
     @staticmethod
     def post(request):
@@ -26,11 +26,11 @@ class SubscriptionsList(ListAPIView):
 	if 0 == request.user.subsperdayremain:
 	    raise exceptions.PermissionDenied("Publish is limit.")
 
-        serformat = SubscriptionFormatSerializer(data=request.data, context={'request': request})
+        serformat = SensordataFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():
             data = serformat.save()
             return Response(
-                { "results": SubscriptionSerializer(data, many=True, context={'request': request}).data },
+                { "results": SensordataSerializer(data, many=True, context={'request': request}).data},
                 status=status.HTTP_201_CREATED
             )
         else:
@@ -47,20 +47,20 @@ class SubscriptionDetail(GenericAPIView):
     @staticmethod
     def get_object(pk):
         try:
-            return Subscriptions.objects.get(pk=pk)
+            return Sensordatas.objects.get(pk=pk)
         except Exception:
             raise Http404
 
     def get(self, request, pk, format=None):
         subs = self.get_object(pk)
-        serializer = SubscriptionSerializer(subs, context={'request': request})
+        serializer = SensordataSerializer(subs, context={'request': request})
         return Response(serializer.data)
 
 
 class SubscriptionFilterUser(ListAPIView):
     """
     Retrieve Subscription instance with user filtering.
-    @url /subscriptions/user/<user-username>
+    @url /sensordatas/user/<user-username>
 
     Filtering by subs date:
     @query ?start=<date-time>&&end=<date-time>
@@ -77,11 +77,11 @@ class SubscriptionFilterUser(ListAPIView):
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
-    serializer_class = SubscriptionSerializer
+    serializer_class = SensordataSerializer
 
     def get_queryset(self):
         """
-        This view should return a list of all the subscriptions
+        This view should return a list of all the sensordatas
         for the currently authenticated user.
         """
         user = self.request.user
@@ -97,15 +97,15 @@ class SubscriptionFilterUser(ListAPIView):
 
         for node in nodes:
             if filter_from and filter_last :
-                all_subs = Subscriptions.objects.filter(
+                all_subs = Sensordatas.objects.filter(
                     node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
                 )
             elif filter_from:
-                all_subs = Subscriptions.objects.filter(node=node, timestamp__gte=filter_from)
+                all_subs = Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
             elif filter_last:
-                all_subs = Subscriptions.objects.filter(node=node, timestamp__lte=filter_last)
+                all_subs = Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
             else:
-                all_subs = Subscriptions.objects.filter(node=node)
+                all_subs = Sensordatas.objects.filter(node=node)
 
             for sub in all_subs:
                 tmp.append(sub)
@@ -115,7 +115,7 @@ class SubscriptionFilterUser(ListAPIView):
 class SubscriptionFilterNode(ListAPIView):
     """
     Retrieve Subscription instance with node filtering.
-    @url /subscriptions/node/<node-id>
+    @url /sensordatas/node/<node-id>
 
     Filtering by subs date:
     @query ?start=<date-time>&&end=<date-time>
@@ -132,7 +132,7 @@ class SubscriptionFilterNode(ListAPIView):
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
-    serializer_class = SubscriptionSerializer
+    serializer_class = SensordataSerializer
 
     @staticmethod
     def checknode(pk):
@@ -158,15 +158,15 @@ class SubscriptionFilterNode(ListAPIView):
         filter_last = self.request.GET.get('end')
 
         if filter_from and filter_last:
-            return Subscriptions.objects.filter(
+            return Sensordatas.objects.filter(
                 node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
             )
         elif filter_from:
-            return Subscriptions.objects.filter(node=node, timestamp__gte=filter_from)
+            return Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
         elif filter_last:
-            return Subscriptions.objects.filter(node=node, timestamp__lte=filter_last)
+            return Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
         else:
-            return Subscriptions.objects.filter(node=node)
+            return Sensordatas.objects.filter(node=node)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -177,7 +177,7 @@ class SubscriptionFilterNode(ListAPIView):
         queryset = self.filter_queryset(raw_queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = SubscriptionSerializer(page, many=True, context={'request': request})
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
@@ -187,7 +187,7 @@ class SubscriptionFilterNode(ListAPIView):
 class SubscriptionFilterNodeSensor(ListAPIView):
     """
     Retrieve Subscription instance with node and sensor filtering.
-    @url /subscriptions/node/<node-label>/sensor/<sensor-label>
+    @url /sensordatas/node/<node-label>/sensor/<sensor-label>
 
     Filtering by subs date:
     @query ?start=<date-time>&&end=<date-time>
@@ -204,7 +204,7 @@ class SubscriptionFilterNodeSensor(ListAPIView):
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
-    serializer_class = SubscriptionSerializer
+    serializer_class = SensordataSerializer
 
     def checknode(self, node, sensor):
         """
@@ -232,7 +232,7 @@ class SubscriptionFilterNodeSensor(ListAPIView):
 
     def get_queryset(self):
         """
-        This view should return a list of all the subscription for
+        This view should return a list of all the sensordatas for
         the node as determined by the node portion of the URL.
         """
         nodelabel = self.kwargs['node']
@@ -246,22 +246,22 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         filter_last = self.request.GET.get('end')
 
         if filter_from and filter_last:
-            return Subscriptions.objects.filter(
+            return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from, timestamp__lte=filter_last
             )
         elif filter_from:
-            return Subscriptions.objects.filter(
+            return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from
             )
         elif filter_last:
-            return Subscriptions.objects.filter(
+            return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__lte=filter_last
             )
         else:
-            return Subscriptions.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
+            return Sensordatas.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -272,7 +272,7 @@ class SubscriptionFilterNodeSensor(ListAPIView):
         queryset = self.filter_queryset(raw_queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = SubscriptionSerializer(page, many=True, context={'request': request})
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)

@@ -6,7 +6,7 @@ from authenticate.forms import NodeAuthForm, UserAuthForm
 from authenticate.utils import node_jwt_payload_handler, user_jwt_payload_handler
 from authenticate.serializers import UserSerializer
 from nodes.serializers import NodeSerializer
-from cloud_gateway import settings
+from cloud_platform import settings
 
 
 class UserTokenCreator(APIView):

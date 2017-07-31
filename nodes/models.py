@@ -10,6 +10,6 @@ class Nodes(Document):
     label = StringField(max_length=28)
     secretkey = StringField(required=True, max_length=16)
     is_public = IntField(default=0)
-    subsperday = IntField(default=0)
-    subsperdayremain = IntField(default=0)
+    pubsperday = IntField(default=0)
+    pubsperdayremain = IntField(default=0)
     sensors = EmbeddedDocumentListField(document_type=Sensors)

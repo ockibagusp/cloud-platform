@@ -12,7 +12,7 @@ class SensorSerializer(EmbeddedDocumentSerializer):
     # extra field
     url = serializers.SerializerMethodField()
     nodeurl = serializers.SerializerMethodField()
-    subscriptions_list = serializers.SerializerMethodField()
+    sensordatas_list = serializers.SerializerMethodField()
 
     class Meta:
         model = Sensors
@@ -36,7 +36,7 @@ class SensorSerializer(EmbeddedDocumentSerializer):
             ], request=self.context['request']
         )
 
-    def get_subscriptions_list(self, obj):
+    def get_sensordatas_list(self, obj):
         # when serialize existing Sensor obj
         if isinstance(obj, Sensors):
             sensorlabel = obj.label
@@ -44,7 +44,7 @@ class SensorSerializer(EmbeddedDocumentSerializer):
             sensorlabel = self.context['request'].data.get('label')
 
         node = Nodes.objects.get(pk=self.context.get('nodeid'))
-        return reverse('subscription-filter-node-sensor', args=[node.label, sensorlabel],
+        return reverse('sensordata-filter-node-sensor', args=[node.label, sensorlabel],
                        request=self.context['request'])
 
     def validate_label(self, value):

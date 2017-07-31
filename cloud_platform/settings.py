@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'authenticate',
     'nodes',
     'sensors',
-    'subscriptions'
+    'sensordatas'
 ]
 
 MIDDLEWARE = [
@@ -59,7 +59,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'cloud_gateway.urls'
+ROOT_URLCONF = 'cloud_platform.urls'
 
 TEMPLATES = [
     {
@@ -81,7 +81,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'cloud_gateway.wsgi.application'
+WSGI_APPLICATION = 'cloud_platform.wsgi.application'
 
 
 # Database

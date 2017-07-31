@@ -29,7 +29,7 @@ urlpatterns = [
     url(r'^$', welcome),
     url(r'^users/', include('users.urls')),
     url(r'^nodes/', include('nodes.urls')),
-    url(r'^subscriptions/', include('subscriptions.urls')),
+    url(r'^sensordatas/', include('sensordatas.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),
     url(r'^node-auth/$', NodeTokenCreator.as_view()),
     url(r'^register/$', ResearcherRegistration.as_view())

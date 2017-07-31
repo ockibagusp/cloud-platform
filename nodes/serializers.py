@@ -17,8 +17,8 @@ class NodeSerializer(DocumentSerializer):
         view_name='node-sensors-list',
         lookup_field='pk'
     )
-    subscriptions_list = serializers.HyperlinkedIdentityField(
-        view_name='subscription-filter-node',
+    sensordatas_list = serializers.HyperlinkedIdentityField(
+        view_name='sensordata-filter-node',
         lookup_field='label',
         lookup_url_kwarg='node'
     )
@@ -51,7 +51,7 @@ class NodeSerializer(DocumentSerializer):
 
     def create(self, validated_data):
         node = Nodes.objects.create(**validated_data)
-        node.subsperdayremain = node.subsperday
+        node.pubsperdayremain = node.pubsperday
         node.save()
         return node
 
@@ -59,7 +59,7 @@ class NodeSerializer(DocumentSerializer):
         instance.label = validated_data.get('label', instance.label)
         instance.secretkey = validated_data.get('secretkey', instance.secretkey)
         instance.is_public = validated_data.get('is_public', instance.is_public)
-        instance.subsperday = validated_data.get('subsperday', instance.subsperday)
-        instance.subsperdayremain = validated_data.get('subsperday', instance.subsperday)
+        instance.pubsperday = validated_data.get('pubsperday', instance.pubsperday)
+        instance.pubsperdayremain = validated_data.get('pubsperday', instance.pubsperday)
         instance.save()
         return instance

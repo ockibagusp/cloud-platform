@@ -4,7 +4,7 @@ from nodes.models import Nodes
 import datetime
 
 
-class Subscriptions(Document):
+class Sensordatas(Document):
     node = ReferenceField(Nodes, reverse_delete_rule=CASCADE)
     sensor = ObjectIdField(required=True)
     data = IntField()

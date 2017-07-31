@@ -6,7 +6,7 @@ from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsUser
 from nodes.models import Nodes
 from sensors.models import Sensors
-from subscriptions.models import Subscriptions
+from sensordatas.models import Sensordatas
 from sensors.serializers import SensorSerializer
 
 
@@ -158,5 +158,5 @@ class SensorDetail(GenericAPIView):
 
         Nodes.objects(pk=pk).update_one(pull__sensors__id=sensorid)
         # delete referer subscription
-        Subscriptions.objects(sensor=sensorid).delete()
+        Sensordatas.objects(sensor=sensorid).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

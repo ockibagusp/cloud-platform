@@ -3,11 +3,11 @@ from rest_framework import serializers
 from rest_framework.fields import ListField
 from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
-from subscriptions.models import Subscriptions
+from sensordatas.models import Sensordatas
 from nodes.models import Nodes
 
 
-class SubscriptionSerializer(DocumentSerializer):
+class SensordataSerializer(DocumentSerializer):
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     # extra field
     testing = serializers.BooleanField(required=False)
@@ -17,11 +17,11 @@ class SubscriptionSerializer(DocumentSerializer):
     sensorlabel = serializers.SerializerMethodField(method_name='getsensorlabel')
 
     class Meta:
-        model = Subscriptions
+        model = Sensordatas
         fields = '__all__'
 
     def get_url(self, obj):
-        return reverse('subscription-detail', args=[obj.id], request=self.context['request'])
+        return reverse('sensordata-detail', args=[obj.id], request=self.context['request'])
 
     def getnodeurl(self, obj):
         return reverse('nodes-detail', args=[obj.node.pk], request=self.context['request'])
@@ -34,26 +34,39 @@ class SubscriptionSerializer(DocumentSerializer):
         obj.node.sensors.get(id=obj.sensor)
         return obj.node.sensors.get(id=obj.sensor).label
 
+    def validate(self, data):
+        super(SensordataSerializer, self).validate(data)
+        node = data.get('node')
+
+        ''' -1 means node has not pubcription limit '''
+        if -1 is node.pubsperday:
+            return data
+
+        ''' check if node has remaining pubcription this day '''
+        if 0 != node.pubsperdayremain:
+            return data
+        raise serializers.ValidationError('pubcription is limit.')
+
     def create(self, validated_data):
         node = validated_data.get('node')
         sensor = validated_data.get('sensor')
 
-        ''' create new Subscription instance '''
-        subs = Subscriptions()
-        subs.node = node
-        subs.sensor = sensor
-        subs.data = validated_data.get('data')
+        ''' create new pubcription instance '''
+        pub = Sensordatas()
+        pub.node = node
+        pub.sensor = sensor
+        pub.data = validated_data.get('data')
         if not validated_data.get('testing'):
-            subs.save()
-        return subs
+            pub.save()
+        return pub
 
 
-class SubscriptionFormatSerializer(DocumentSerializer):
+class SensordataFormatSerializer(DocumentSerializer):
     publish = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
-        model = Subscriptions
+        model = Sensordatas
         fields = ('publish', 'testing')
 
     """ ensure that reffered object sensor is exist. """
@@ -73,7 +86,7 @@ class SubscriptionFormatSerializer(DocumentSerializer):
             return False
 
     def validate(self, data):
-        super(SubscriptionFormatSerializer, self).validate(data)
+        super(SensordataFormatSerializer, self).validate(data)
         errors = OrderedDict()
 
         node = self.get_node(self.context.get('request').user)
@@ -113,15 +126,15 @@ class SubscriptionFormatSerializer(DocumentSerializer):
         for publish in publishes:
             data = {'node': node.label, 'sensor': node.sensors.get(label=publish.get('sensor')).id,
                     'data': publish.get('data'), 'testing': istesting}
-            serializer = SubscriptionSerializer(data=data)
+            serializer = SensordataSerializer(data=data)
             if serializer.is_valid():
-                subs = serializer.save()
-                newsensors.append(subs)
+                pub = serializer.save()
+                newsensors.append(pub)
             else:
                 raise serializers.ValidationError(serializer.errors)
         if not istesting:
-            ''' decrement Nodes subsperdayremain when node has subscription limit '''
-            if -1 is not node.subsperday:
-                node.subsperdayremain -= 1
+            ''' decrement Nodes pubsperdayremain when node has publish limit '''
+            if -1 is not node.pubsperday:
+                node.pubsperdayremain -= 1
             node.save()
         return newsensors

@@ -22,15 +22,15 @@ class SubscriptionsList(ListAPIView):
         # ensure that only nodes(provided by JWT credentials) can perform this action
         if not isinstance(request.user, Nodes):
             raise exceptions.PermissionDenied("You do not have permission to perform this action.")
-	
-	if 0 == request.user.subsperdayremain:
-	    raise exceptions.PermissionDenied("Publish is limit.")
+
+        if 0 == request.user.subsperdayremain:
+            raise exceptions.PermissionDenied("Publish is limit.")
 
         serformat = SensordataFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():
             data = serformat.save()
             return Response(
-                { "results": SensordataSerializer(data, many=True, context={'request': request}).data},
+                {"results": SensordataSerializer(data, many=True, context={'request': request}).data},
                 status=status.HTTP_201_CREATED
             )
         else:
@@ -89,14 +89,14 @@ class SubscriptionFilterUser(ListAPIView):
         if user.username != self.kwargs.get('user'):
             raise PermissionDenied(detail="Your credential and URL prefix must be same.")
 
-        nodes = Nodes.objects.filter(user=user)
+        nodes = Nodes.objects(user=user)
         tmp = []
 
         filter_from = self.request.GET.get('start')
         filter_last = self.request.GET.get('end')
 
         for node in nodes:
-            if filter_from and filter_last :
+            if filter_from and filter_last:
                 all_subs = Sensordatas.objects.filter(
                     node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
                 )

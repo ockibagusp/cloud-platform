@@ -12,7 +12,7 @@ from nodes.models import Nodes
 from helpers import SensordatasService
 
 
-class SubscriptionsList(ListAPIView):
+class SensordatasList(ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     queryset = Sensordatas.objects.all()
@@ -38,7 +38,7 @@ class SubscriptionsList(ListAPIView):
             return Response(serformat.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SubscriptionDetail(GenericAPIView):
+class SensordatasDetail(GenericAPIView):
     """
     Retrieve, update or delete a Subscription instance.
     """
@@ -58,7 +58,7 @@ class SubscriptionDetail(GenericAPIView):
         return Response(serializer.data)
 
 
-class SubscriptionFilterUser0(ListAPIView):
+class SensordatasFilterUser0(ListAPIView):
     """
     Retrieve Subscription instance with user filtering.
     @url /sensordatas/user/<user-username>
@@ -113,7 +113,7 @@ class SubscriptionFilterUser0(ListAPIView):
         return tmp
 
 
-class SubscriptionFilterUser(ListAPIView):
+class SensordatasFilterUser(ListAPIView):
 
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
@@ -122,7 +122,7 @@ class SubscriptionFilterUser(ListAPIView):
         return Response(SensordatasService().getbyuser(request))
 
 
-class SubscriptionFilterNode(ListAPIView):
+class SensordatasFilterNode(ListAPIView):
     """
     Retrieve Subscription instance with node filtering.
     @url /sensordatas/node/<node-id>
@@ -194,7 +194,7 @@ class SubscriptionFilterNode(ListAPIView):
         return Response(serializer.data)
 
 
-class SubscriptionFilterNodeSensor(ListAPIView):
+class SensordatasFilterNodeSensor(ListAPIView):
     """
     Retrieve Subscription instance with node and sensor filtering.
     @url /sensordatas/node/<node-label>/sensor/<sensor-label>

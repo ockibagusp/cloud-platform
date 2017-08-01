@@ -9,6 +9,7 @@ from authenticate.permissions import IsAuthenticated, IsUser
 from sensordatas.models import Sensordatas
 from sensordatas.serializers import SensordataSerializer, SensordataFormatSerializer
 from nodes.models import Nodes
+from helpers import SensordatasService
 
 
 class SubscriptionsList(ListAPIView):
@@ -57,7 +58,7 @@ class SubscriptionDetail(GenericAPIView):
         return Response(serializer.data)
 
 
-class SubscriptionFilterUser(ListAPIView):
+class SubscriptionFilterUser0(ListAPIView):
     """
     Retrieve Subscription instance with user filtering.
     @url /sensordatas/user/<user-username>
@@ -110,6 +111,15 @@ class SubscriptionFilterUser(ListAPIView):
             for sub in all_subs:
                 tmp.append(sub)
         return tmp
+
+
+class SubscriptionFilterUser(ListAPIView):
+
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+
+    def get(self, request, *args, **kwargs):
+        return Response(SensordatasService().getbyuser(request))
 
 
 class SubscriptionFilterNode(ListAPIView):

@@ -1,0 +1,13 @@
+{
+  "api_url": "localhost:8080",
+  "user": "basukicahya",
+  "node": {
+    "label": "FILKOM_1",
+    "secretkey": "rahasia",
+    "sensors": [
+      "TEMP",
+      "HUMIDITY",
+      "RADIANCE"
+    ]
+  }
+}

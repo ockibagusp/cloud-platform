@@ -1,0 +1,4 @@
+.idea
+**/*.pyc
+storage.db
+storage.db-journal

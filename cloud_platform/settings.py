@@ -137,7 +137,7 @@ STATICFILES_DIRS = (
 )
 
 # mongoengine.connect(_MONGODB_NAME, host=_MONGODB_DATABASE_HOST)
-mongoengine.connect('agrihub', host='127.0.0.1')
+mongoengine.connect('agrihub', host='localhost')
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

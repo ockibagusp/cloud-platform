@@ -6,7 +6,7 @@ from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsUser
 from nodes.models import Nodes
 from nodes.serializers import NodeSerializer
-from users.models import User
+from nodes.forms import NodePublishResetForm
 
 
 class NodesList(ListAPIView):
@@ -99,3 +99,36 @@ class NodeDetail(GenericAPIView):
             }, status=status.HTTP_403_FORBIDDEN)
         node.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NodePublishReset(GenericAPIView):
+    """
+      Reset node publish per day remaining to publish per day initial value.
+    """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Nodes.objects.get(pk=pk)
+        except Exception:
+            raise Http404
+
+    def post(self, request):
+        form = NodePublishResetForm(request.data)
+        if form.is_valid():
+            node = self.get_object(form.cleaned_data.get('id'))
+            if request.user != node.user and 0 == node.is_public:
+                return Response({
+                    'detail': 'You can not reset  pubsperdayremain of another person node.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            elif -1 == node.pubsperdayremain:
+                return Response({
+                    'detail': 'You only can not reset node with unlimited pubsperday'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            node.pubsperdayremain = node.pubsperday
+            node.save()
+            serializer = NodeSerializer(node, context={'request': request})
+            return Response(serializer.data)
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -37,7 +37,7 @@ class NodeSerializer(DocumentSerializer):
         if None is not self.instance:
             if not node or self.instance.label == value:
                 return value
-        elif not node: # when create new instance
+        elif not node:  # when create new instance
             return value
         raise serializers.ValidationError("This field must be unique.")
 

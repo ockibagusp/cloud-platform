@@ -24,7 +24,7 @@ class SensordatasList(ListAPIView):
         if not isinstance(request.user, Nodes):
             raise exceptions.PermissionDenied("You do not have permission to perform this action.")
 
-        if 0 == request.user.subsperdayremain:
+        if 0 == request.user.pubsperdayremain:
             raise exceptions.PermissionDenied("Publish is limit.")
 
         serformat = SensordataFormatSerializer(data=request.data, context={'request': request})

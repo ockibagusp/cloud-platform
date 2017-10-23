@@ -143,9 +143,9 @@ class SensorDetail(GenericAPIView):
         node.sensors = tmp_sensors
         node.save()
         return Response(SensorSerializer(
-                self_sensor, context={'request': request, 'nodeid': pk}
-            ).data, status=status.HTTP_201_CREATED
-        )
+            self_sensor, context={'request': request, 'nodeid': pk}
+        ).data, status=status.HTTP_201_CREATED
+                        )
 
     def delete(self, request, pk, sensorid):
         # check that nodeid and sensorid is valid

@@ -10,14 +10,5 @@ class Supernodes(Document):
     label = StringField(max_length=28)
     description = StringField(max_length=140, required=False)
 
-    meta = {
-        'indexes': [
-            {
-                'fields': ['-label'],
-                'unique': True
-            },
-        ],
-    }
-
     def __unicode__(self):
         return self.label

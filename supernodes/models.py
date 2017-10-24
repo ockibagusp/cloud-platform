@@ -8,6 +8,7 @@ from users.models import User
 class Supernodes(Document):
     user = ReferenceField(User, reverse_delete_rule=CASCADE)
     label = StringField(max_length=28)
+    secretkey = StringField(required=True, max_length=32)
     description = StringField(max_length=140, required=False)
 
     def __unicode__(self):

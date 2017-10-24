@@ -12,8 +12,7 @@ class Sensors(EmbeddedDocument):
         'indexes': [
             {
                 'fields': ['-label'],
-                'unique': True,
-                'types': False
+                'unique': True
             },
         ],
     }

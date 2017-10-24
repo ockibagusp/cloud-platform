@@ -28,6 +28,7 @@ def welcome(request):
 urlpatterns = [
     url(r'^$', welcome),
     url(r'^users/', include('users.urls')),
+    url(r'^supernodes/', include('supernodes.urls')),
     url(r'^nodes/', include('nodes.urls')),
     url(r'^sensordatas/', include('sensordatas.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),

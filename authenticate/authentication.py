@@ -7,7 +7,7 @@ from rest_framework.authentication import (
 )
 from rest_framework_jwt.settings import api_settings
 from authenticate.utils import jwt_get_label_from_payload_handler, jwt_get_username_from_payload_handler
-from nodes.models import Nodes
+from supernodes.models import Supernodes
 from users.models import User
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -52,8 +52,8 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
 
         if label:
             try:
-                node = Nodes.objects.get(id=payload.get('id'))
-            except Nodes.DoesNotExist:
+                node = Supernodes.objects.get(id=payload.get('id'))
+            except Supernodes.DoesNotExist:
                 msg = _('Invalid signature.')
                 raise exceptions.AuthenticationFailed(msg)
             return node

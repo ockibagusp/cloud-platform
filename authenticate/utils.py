@@ -4,11 +4,10 @@ from datetime import datetime
 from rest_framework_jwt.settings import api_settings
 
 
-def node_jwt_payload_handler(node):
+def supernode_jwt_payload_handler(supernode):
     payload = {
-        'id': str(node.id),
-        'label': node.label,
-        'pubsperday': node.pubsperday,
+        'id': str(supernode.id),
+        'label': supernode.label,
         'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
     }
 

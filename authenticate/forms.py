@@ -1,10 +1,10 @@
 from django import forms
-from nodes.models import Nodes
+from supernodes.models import Supernodes
 from users.models import User
 from authentication import check_password
 
 
-class NodeAuthForm(forms.Form):
+class SuperNodeAuthForm(forms.Form):
     user = forms.CharField(label=u'User')
     label = forms.CharField(label=u'Label')
     secretkey = forms.CharField(label=u'Secret Key')
@@ -13,13 +13,13 @@ class NodeAuthForm(forms.Form):
         print self.cleaned_data.get('user')
         try:
             user = User.objects.get(username=self.cleaned_data.get('user'))
-            self.node = Nodes.objects.get(
+            self.supernode = Supernodes.objects.get(
                 user=user.id,
                 label=self.cleaned_data.get('label'),
                 secretkey=self.cleaned_data.get('secretkey')
             )
-            return self.node
-        except (Nodes.DoesNotExist, User.DoesNotExist):
+            return self.supernode
+        except (Supernodes.DoesNotExist, User.DoesNotExist):
             raise forms.ValidationError("Node authenticate failure.")
 
 

@@ -2,10 +2,10 @@ import jwt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from authenticate.forms import NodeAuthForm, UserAuthForm
-from authenticate.utils import node_jwt_payload_handler, user_jwt_payload_handler
+from authenticate.forms import SuperNodeAuthForm, UserAuthForm
+from authenticate.utils import supernode_jwt_payload_handler, user_jwt_payload_handler
 from authenticate.serializers import UserSerializer
-from nodes.serializers import NodeSerializer
+from supernodes.serializers import SuperNodesSerializer
 from cloud_platform import settings
 
 
@@ -36,17 +36,17 @@ class NodeTokenCreator(APIView):
     """
 
     def post(self, request, format=None):
-        form = NodeAuthForm(request.data)
+        form = SuperNodeAuthForm(request.data)
         if form.is_valid():
             return Response({
-                'node': NodeSerializer(form.node, context={'request': request}).data,
-                'token': self.create_token(form.node)
+                'supernode': SuperNodesSerializer(form.supernode, context={'request': request}).data,
+                'token': self.create_token(form.supernode)
             })
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def create_token(node):
-        payload = node_jwt_payload_handler(node)
+        payload = supernode_jwt_payload_handler(node)
         token = jwt.encode(payload, settings.SECRET_KEY)
         return token.decode('unicode_escape')
 

@@ -119,7 +119,7 @@ class NodePublishReset(GenericAPIView):
         form = NodePublishResetForm(request.data)
         if form.is_valid():
             node = self.get_object(form.cleaned_data.get('id'))
-            if request.user != node.user and 0 == node.is_public:
+            if request.user != node.user:
                 return Response({
                     'detail': 'You can not reset  pubsperdayremain of another person node.'
                 }, status=status.HTTP_403_FORBIDDEN)

@@ -51,8 +51,8 @@ class SensorsList(ListAPIView):
         # no access to another user private node
         if request.user != node.user and 0 == node.is_public:
             return Response({
-                'detail': 'Not found.'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'detail': 'You can not create sensor for another person node.'
+            }, status=status.HTTP_403_FORBIDDEN)
 
         serializer = SensorSerializer(data=request.data, context={
             'request': request, 'nodeid': pk
@@ -117,11 +117,11 @@ class SensorDetail(GenericAPIView):
         """
         data = self.get_node(pk, sensorid)
         node = data.get('node')
-        # no access to another user private node
-        if request.user != node.user and 0 == node.is_public:
+        # no access to update another user node
+        if request.user != node.user:
             return Response({
-                'detail': 'Not found.'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'detail': 'You can not update another person node.'
+            }, status=status.HTTP_403_FORBIDDEN)
 
         tmp_sensors = data.get('node').sensors
         self_sensor = Sensors()
@@ -150,11 +150,11 @@ class SensorDetail(GenericAPIView):
     def delete(self, request, pk, sensorid):
         # check that nodeid and sensorid is valid
         data = self.get_node(pk, sensorid)
-        # no access to another user private node
-        if request.user != data.get('node').user and 0 == data.get('node').is_public:
+        # no access to delete another user sensor node
+        if request.user != data.get('node').user:
             return Response({
-                'detail': 'Not found.'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'detail': 'You can not delete another person node.'
+            }, status=status.HTTP_403_FORBIDDEN)
 
         Nodes.objects(pk=pk).update_one(pull__sensors__id=sensorid)
         # delete referer subscription

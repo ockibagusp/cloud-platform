@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 from django.contrib.auth.models import AnonymousUser
-from nodes.models import Nodes
+from supernodes.models import Supernodes
 from users.models import User
 
 
@@ -42,7 +42,7 @@ class IsUser(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return not isinstance(request.user, Nodes) and isinstance(request.user, User)
+        return not isinstance(request.user, Supernodes) and isinstance(request.user, User)
 
 
 class IsAdmin(BasePermission):

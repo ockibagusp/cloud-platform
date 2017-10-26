@@ -9,6 +9,7 @@ from authenticate.permissions import IsAuthenticated, IsUser
 from sensordatas.models import Sensordatas
 from sensordatas.serializers import SensordataSerializer, SensordataFormatSerializer
 from nodes.models import Nodes
+from supernodes.models import Supernodes
 from helpers import SensordatasService
 
 
@@ -21,17 +22,19 @@ class SensordatasList(ListAPIView):
     @staticmethod
     def post(request):
         # ensure that only nodes(provided by JWT credentials) can perform this action
-        if not isinstance(request.user, Nodes):
+        if not isinstance(request.user, Supernodes):
             raise exceptions.PermissionDenied("You do not have permission to perform this action.")
 
-        if 0 == request.user.pubsperdayremain:
-            raise exceptions.PermissionDenied("Publish is limit.")
+        # TODO validate node pubsperdayremain
+        # if 0 == request.user.pubsperdayremain:
+        #     raise exceptions.PermissionDenied("Publish is limit.")
 
+        # validate POST payload format
         serformat = SensordataFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():
-            data = serformat.save()
+            message = serformat.save()
             return Response(
-                {"results": SensordataSerializer(data, many=True, context={'request': request}).data},
+                {"results": message},
                 status=status.HTTP_201_CREATED
             )
         else:
@@ -56,61 +59,6 @@ class SensordatasDetail(GenericAPIView):
         subs = self.get_object(pk)
         serializer = SensordataSerializer(subs, context={'request': request})
         return Response(serializer.data)
-
-
-class SensordatasFilterUser0(ListAPIView):
-    """
-    Retrieve Subscription instance with user filtering.
-    @url /sensordatas/user/<user-username>
-
-    Filtering by subs date:
-    @query ?start=<date-time>&&end=<date-time>
-
-    From to Last filter
-    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
-
-    From to ... filter
-    @query ?start=2016-11-24 16:00:00
-
-    ... to Last filter
-    From to Last filter
-    @query ?end=2016-12-24 16:00:00
-    """
-    authentication_classes = (JSONWebTokenAuthentication,)
-    permission_classes = (IsUser,)
-    serializer_class = SensordataSerializer
-
-    def get_queryset(self):
-        """
-        This view should return a list of all the sensordatas
-        for the currently authenticated user.
-        """
-        user = self.request.user
-
-        if user.username != self.kwargs.get('user'):
-            raise PermissionDenied(detail="Your credential and URL prefix must be same.")
-
-        nodes = Nodes.objects(user=user)
-        tmp = []
-
-        filter_from = self.request.GET.get('start')
-        filter_last = self.request.GET.get('end')
-
-        for node in nodes:
-            if filter_from and filter_last:
-                all_subs = Sensordatas.objects.filter(
-                    node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
-                )
-            elif filter_from:
-                all_subs = Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
-            elif filter_last:
-                all_subs = Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
-            else:
-                all_subs = Sensordatas.objects.filter(node=node)
-
-            for sub in all_subs:
-                tmp.append(sub)
-        return tmp
 
 
 class SensordatasFilterUser(ListAPIView):

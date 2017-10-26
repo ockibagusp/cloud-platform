@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, QueryDict
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
@@ -48,6 +48,10 @@ class NodesList(ListAPIView):
 
     @staticmethod
     def post(request):
+        if isinstance(request.data, QueryDict):
+            return Response({
+                'detail': 'Payload cannot be empty.'
+            }, status=status.HTTP_400_BAD_REQUEST)
         request.data.update({'user': request.user.username})
         serializer = NodeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():

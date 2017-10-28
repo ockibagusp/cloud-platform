@@ -53,5 +53,10 @@ class SensorSerializer(EmbeddedDocumentSerializer):
         try:
             Nodes.objects.get(pk=node_id, sensors__label=value)
         except Nodes.DoesNotExist:
+            # when create new sensor instance
             return value
-        raise serializers.ValidationError("This field must be unique.")
+        if self.context.get('isupdate'):
+            # when update sensor instance
+            return value
+        else:
+            raise serializers.ValidationError("This field must be unique.")

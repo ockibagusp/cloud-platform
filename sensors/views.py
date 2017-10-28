@@ -110,42 +110,45 @@ class SensorDetail(GenericAPIView):
         serializer = SensorSerializer(data.get('sensor'), context={'request': request, 'nodeid': pk})
         return Response(serializer.data)
 
+    # TODO unique and ensure that label at least has 4 character
     def put(self, request, pk, sensorid):
+        # check that label field was defined in the post header
+        if 'label' not in request.data:
+            return Response({'label': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         """
         Manual validation
         cause any selializer cannot handle EmbededDocummentList update
         """
         data = self.get_node(pk, sensorid)
         node = data.get('node')
-        # no access to update another user node
-        if request.user != node.user:
-            return Response({
-                'detail': 'You can not update another person node.'
-            }, status=status.HTTP_403_FORBIDDEN)
+        serializer = SensorSerializer(data=request.data, context={
+            'request': request, 'nodeid': pk, 'isupdate': True
+        }, partial=True)
 
-        tmp_sensors = data.get('node').sensors
-        self_sensor = Sensors()
+        if serializer.is_valid():
+            tmp_sensors = data.get('node').sensors
+            self_sensor = Sensors()
 
-        # check that label field was defined in the post header
-        if 'label' not in request.data:
-            return Response({'label': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            # check that the new value is unique to other
+            for index, sensor in enumerate(node.sensors):
+                if str(sensor.id) == sensorid:
+                    tmp_sensors[index].label = request.data.get('label')
+                    self_sensor = tmp_sensors[index]
+                    continue
 
-        # check that the new value is unique to other
-        for index, sensor in enumerate(node.sensors):
-            if str(sensor.id) == sensorid:
-                tmp_sensors[index].label = request.data.get('label')
-                self_sensor = tmp_sensors[index]
-                continue
+                if sensor.label == request.data.get('label'):
+                    return Response({'label': 'This field must be unique.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if sensor.label == request.data.get('label'):
-                return Response({'label': 'This field must be unique.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        node.sensors = tmp_sensors
-        node.save()
-        return Response(SensorSerializer(
-            self_sensor, context={'request': request, 'nodeid': pk}
-        ).data, status=status.HTTP_201_CREATED
-                        )
+            node.sensors = tmp_sensors
+            node.save()
+            return Response(
+                SensorSerializer(
+                    self_sensor, context={'request': request, 'nodeid': pk}
+                ).data, status=status.HTTP_200_OK
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, sensorid):
         # check that nodeid and sensorid is valid

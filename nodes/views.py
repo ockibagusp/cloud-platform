@@ -8,6 +8,8 @@ from nodes.models import Nodes
 from nodes.serializers import NodeSerializer
 from nodes.forms import NodePublishResetForm
 
+from cloud_platform.helpers import is_objectid_valid, is_url_regex_match
+
 
 class NodesList(ListAPIView):
     """
@@ -15,17 +17,21 @@ class NodesList(ListAPIView):
     Every nodes has visibility option: public and private.
 
     Usage:
-    /               => retrieve all authenticated user nodes
-    /?role=public   => retrieve authenticated user public nodes
-    /?role=private  => retrieve authenticated user private nodes
-    /?role=global   => retrieve all public nodes from other users
+    /nodes/                => retrieve all authenticated user nodes
+    /nodes/?role=public    => retrieve authenticated user public nodes
+    /nodes/?role=private   => retrieve authenticated user private nodes
+    /nodes/?role=global    => retrieve all public nodes from other users
+    /supernodes/:id/nodes/ => retrieve all specific supernode nodes
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
     serializer_class = NodeSerializer
 
     @staticmethod
-    def get_nodes(user, role=None):
+    def get_nodes(user, supernode=None, role=None):
+        if supernode:
+            return Nodes.objects.filter(user=user, supernode=supernode)
+
         if not role:
             return Nodes.objects.filter(user=user)
         else:
@@ -37,7 +43,17 @@ class NodesList(ListAPIView):
                 return Nodes.objects.filter(user=user, is_public=0)
 
     def get(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_nodes(request.user, request.GET.get('role')))
+        # check if request came from supernodes urls
+        if is_url_regex_match(r'^/supernodes/(?P<pk>\w+)/nodes/$', request.get_full_path()):
+            if not is_objectid_valid(kwargs.get('pk')):
+                return Response({
+                    'detail': '%s is not valid ObjectId.' % kwargs.get('pk')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            queryset = self.filter_queryset(
+                self.get_nodes(request.user, kwargs.get('pk'), request.GET.get('role'))
+            )
+        else:
+            queryset = self.filter_queryset(self.get_nodes(request.user, request.GET.get('role')))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = NodeSerializer(page, many=True, context={'request': request})

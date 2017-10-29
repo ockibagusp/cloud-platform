@@ -1,12 +1,12 @@
 from collections import OrderedDict
-from bson import ObjectId
-from bson.errors import InvalidId
 from rest_framework import serializers
 from rest_framework.fields import ListField, CharField
 from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from sensordatas.models import Sensordatas
 from nodes.models import Nodes
+
+from cloud_platform.helpers import is_objectid_valid
 
 
 class SensordataSerializer(DocumentSerializer):
@@ -74,14 +74,6 @@ class SensordataFormatSerializer(DocumentSerializer):
         fields = ('id', 'label', 'nodes', 'testing')
 
     @staticmethod
-    def is_objectid_valid(oid):
-        try:
-            ObjectId(oid)
-            return True
-        except (InvalidId, TypeError):
-            return False
-
-    @staticmethod
     def get_node(supenodeid, nodeid):
         try:
             return Nodes.objects.get(supernode=supenodeid, id=nodeid)
@@ -111,7 +103,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                     "node[%d].id: This field may not be null." % index
                 )
             else:
-                if not self.is_objectid_valid(nodes.get('id')):
+                if not is_objectid_valid(nodes.get('id')):
                     nodeiderror.append(
                         "node[%d].id: %s is not valid ObjectId." % (index, nodes.get('id'))
                     )

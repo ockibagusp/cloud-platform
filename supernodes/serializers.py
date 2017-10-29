@@ -1,22 +1,28 @@
 from rest_framework import serializers
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from users.models import User
+from nodes.models import Nodes
 from supernodes.models import Supernodes
 
 
 class SuperNodesSerializer(DocumentSerializer):
     user = serializers.SlugRelatedField(slug_field="username", queryset=User.objects)
+    label = serializers.CharField(min_length=2, max_length=28)
+    description = serializers.CharField(max_length=140, required=False)
     # extra field
     url = serializers.HyperlinkedIdentityField(
         view_name='supernodes-detail',
         lookup_field='pk'
     )
-    label = serializers.CharField(min_length=2, max_length=28)
-    description = serializers.CharField(max_length=140, required=False)
+    node_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Supernodes
         fields = '__all__'
+
+    @staticmethod
+    def get_node_count(obj):
+        return Nodes.objects.filter(supernode=obj).count()
 
     def validate_label(self, value):
         """

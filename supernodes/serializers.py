@@ -15,6 +15,10 @@ class SuperNodesSerializer(DocumentSerializer):
         lookup_field='pk'
     )
     node_count = serializers.SerializerMethodField()
+    nodes_list = serializers.HyperlinkedIdentityField(
+        view_name='supernodes-node-list',
+        lookup_field='pk'
+    )
 
     class Meta:
         model = Supernodes

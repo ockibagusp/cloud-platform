@@ -8,7 +8,7 @@ from supernodes.models import Supernodes
 class SuperNodesSerializer(DocumentSerializer):
     user = serializers.SlugRelatedField(slug_field="username", queryset=User.objects)
     label = serializers.CharField(min_length=2, max_length=28)
-    description = serializers.CharField(max_length=140, required=False)
+    description = serializers.CharField(max_length=140, required=False, allow_null=True)
     # extra field
     url = serializers.HyperlinkedIdentityField(
         view_name='supernodes-detail',

@@ -53,7 +53,7 @@ class NodesList(ListAPIView):
                 self.get_nodes(request.user, kwargs.get('pk'), request.GET.get('role'))
             )
         else:
-            queryset = self.filter_queryset(self.get_nodes(request.user, request.GET.get('role')))
+            queryset = self.filter_queryset(self.get_nodes(user=request.user, role=request.GET.get('role')))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = NodeSerializer(page, many=True, context={'request': request})

@@ -1,4 +1,6 @@
 from collections import OrderedDict
+
+from datetime import datetime
 from rest_framework import serializers
 from rest_framework.fields import ListField, CharField
 from rest_framework.reverse import reverse
@@ -57,6 +59,7 @@ class SensordataSerializer(DocumentSerializer):
         pub = Sensordatas()
         pub.node = node
         pub.sensor = sensor
+        pub.timestamp = validated_data.get('timestamp')
         pub.data = validated_data.get('data')
         if not validated_data.get('testing'):
             pub.save()
@@ -211,8 +214,9 @@ class SensordataFormatSerializer(DocumentSerializer):
             for sensor in node.get('sensors'):
                 sensor_obj = node_obj.sensors.get(label=sensor.get('label'))
                 for value in sensor.get('value'):
+                    timestamp = datetime.fromtimestamp(value[1])
                     data = {'node': node_obj.label, 'sensor': sensor_obj.id,
-                            'data': value[0], 'testing': istesting}
+                            'data': value[0], 'timestamp': timestamp, 'testing': istesting}
                     serializer = SensordataSerializer(data=data)
                     if serializer.is_valid():
                         count += 1

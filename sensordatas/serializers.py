@@ -6,12 +6,14 @@ from rest_framework.fields import ListField, CharField
 from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from sensordatas.models import Sensordatas
+from supernodes.models import Supernodes
 from nodes.models import Nodes
 
 from cloud_platform.helpers import is_objectid_valid
 
 
 class SensordataSerializer(DocumentSerializer):
+    supernode = serializers.SlugRelatedField(slug_field="label", queryset=Supernodes.objects)
     node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
     # extra field
     testing = serializers.BooleanField(required=False)
@@ -52,11 +54,13 @@ class SensordataSerializer(DocumentSerializer):
         raise serializers.ValidationError('pubcription is limit.')
 
     def create(self, validated_data):
+        supernode = validated_data.get('supernode')
         node = validated_data.get('node')
         sensor = validated_data.get('sensor')
 
         ''' create new pubcription instance '''
         pub = Sensordatas()
+        pub.supernode = supernode
         pub.node = node
         pub.sensor = sensor
         pub.timestamp = validated_data.get('timestamp')
@@ -215,7 +219,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                 sensor_obj = node_obj.sensors.get(label=sensor.get('label'))
                 for value in sensor.get('value'):
                     timestamp = datetime.fromtimestamp(value[1])
-                    data = {'node': node_obj.label, 'sensor': sensor_obj.id,
+                    data = {'supernode': supernode.label, 'node': node_obj.label, 'sensor': sensor_obj.id,
                             'data': value[0], 'timestamp': timestamp, 'testing': istesting}
                     serializer = SensordataSerializer(data=data)
                     if serializer.is_valid():

@@ -30,8 +30,15 @@ class NodesList(ListAPIView):
     @staticmethod
     def get_nodes(user, supernode=None, role=None):
         if supernode:
-            return Nodes.objects.filter(user=user, supernode=supernode)
-
+            if not role:
+                return Nodes.objects.filter(user=user, supernode=supernode)
+            else:
+                if 'global' == role:
+                    return Nodes.objects.filter(user__ne=user, supernode=supernode, is_public=1)
+                elif 'public' == role:
+                    return Nodes.objects.filter(user=user, supernode=supernode, is_public=1)
+                else:  # private
+                    return Nodes.objects.filter(user=user, supernode=supernode, is_public=0)
         if not role:
             return Nodes.objects.filter(user=user)
         else:
@@ -44,11 +51,12 @@ class NodesList(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         # check if request came from supernodes urls
-        if is_url_regex_match(r'^/supernodes/(?P<pk>\w+)/nodes/$', request.get_full_path()):
+        if is_url_regex_match(r'^/supernodes/(?P<pk>\w+)/nodes/', request.get_full_path()):
             if not is_objectid_valid(kwargs.get('pk')):
                 return Response({
                     'detail': '%s is not valid ObjectId.' % kwargs.get('pk')
                 }, status=status.HTTP_400_BAD_REQUEST)
+            print "masuk"
             queryset = self.filter_queryset(
                 self.get_nodes(request.user, kwargs.get('pk'), request.GET.get('role'))
             )

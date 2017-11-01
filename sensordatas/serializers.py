@@ -71,14 +71,13 @@ class SensordataSerializer(DocumentSerializer):
 
 
 class SensordataFormatSerializer(DocumentSerializer):
-    id = CharField()
     label = CharField()
     nodes = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Sensordatas
-        fields = ('id', 'label', 'nodes', 'testing')
+        fields = ('label', 'nodes', 'testing')
 
     @staticmethod
     def get_node(supenodeid, nodeid):
@@ -114,6 +113,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                     nodeiderror.append(
                         "node[%d].id: %s is not valid ObjectId." % (index, nodes.get('id'))
                     )
+                    continue
                 else:
                     node = self.get_node(supernode.id, nodes.get('id'))
                     if not node:

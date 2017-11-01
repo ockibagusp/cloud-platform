@@ -166,6 +166,7 @@ class SensordataFormatSerializer(DocumentSerializer):
     '''
     helper method: validate format of node[i].sensors
     '''
+
     def nodes_sensors_validate(self, index, node, sensors):
         sensorerror = []
         for jindex, sensor in enumerate(sensors):

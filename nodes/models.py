@@ -3,6 +3,8 @@ from mongoengine import StringField, ReferenceField, EmbeddedDocumentListField, 
 from sensors.models import Sensors
 from users.models import User
 from supernodes.models import Supernodes
+
+
 # delete embeded -> Nodes.objects(label="FILKOM_1").update_one(pull__sensors__label="HUMIDITY")
 
 

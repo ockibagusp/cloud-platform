@@ -49,4 +49,3 @@ class NodeTokenCreator(APIView):
         payload = supernode_jwt_payload_handler(node)
         token = jwt.encode(payload, settings.SECRET_KEY)
         return token.decode('unicode_escape')
-

@@ -22,6 +22,6 @@ class Credentials(Db):
         self.cursor.execute(
             "INSERT INTO `credentials` "
             "VALUES(:token, :subsperdayremain)",
-            {"token": token, "subsperdayremain": subsperdayremain }
+            {"token": token, "subsperdayremain": subsperdayremain}
         )
         self.conn.commit()

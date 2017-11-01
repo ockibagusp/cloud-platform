@@ -115,7 +115,7 @@ class SensorDetail(GenericAPIView):
         # check that label field was defined in the post header
         if 'label' not in request.data:
             return Response({'label': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         """
         Manual validation
         cause any selializer cannot handle EmbededDocummentList update

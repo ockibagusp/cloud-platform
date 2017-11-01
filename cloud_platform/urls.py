@@ -25,6 +25,7 @@ from users.views import ResearcherRegistration
 def welcome(request):
     return Response({"message": "Welcome to AgriHub API!"})
 
+
 urlpatterns = [
     url(r'^$', welcome),
     url(r'^users/', include('users.urls')),

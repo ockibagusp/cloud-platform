@@ -62,7 +62,6 @@ class SensordatasDetail(GenericAPIView):
 
 
 class SensordatasFilterUser(ListAPIView):
-
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsUser,)
 

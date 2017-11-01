@@ -26,15 +26,15 @@ class SensorSerializer(EmbeddedDocumentSerializer):
             sensorid = obj.get('id')
 
         return reverse('node-sensor-detail', args=[
-                self.context.get('nodeid'), sensorid
-            ], request=self.context['request']
-        )
+            self.context.get('nodeid'), sensorid
+        ], request=self.context['request']
+                       )
 
     def get_nodeurl(self, obj):
         return reverse('nodes-detail', args=[
-                self.context.get('nodeid')
-            ], request=self.context['request']
-        )
+            self.context.get('nodeid')
+        ], request=self.context['request']
+                       )
 
     def get_sensordatas_list(self, obj):
         # when serialize existing Sensor obj

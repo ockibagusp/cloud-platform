@@ -57,7 +57,7 @@ class SensordatasService:
                     ]
                 }
             },
-            {"$skip": page-1},
+            {"$skip": page - 1},
             {"$limit": 10}
         ]
 

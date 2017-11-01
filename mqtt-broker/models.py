@@ -2,7 +2,7 @@ import bson, json, hashlib, datetime
 from mongoengine import *
 
 
-#Class untuk mongoengine
+# Class untuk mongoengine
 class Sensors(EmbeddedDocument):
     id = ObjectIdField(default=bson.objectid.ObjectId())
     label = StringField(max_length=28)
@@ -37,7 +37,6 @@ class User(Document):
             },
         ],
     }
-
 
 
 class Nodes(Document):

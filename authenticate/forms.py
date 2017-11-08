@@ -10,7 +10,6 @@ class SuperNodeAuthForm(forms.Form):
     secretkey = forms.CharField(label=u'Secret Key')
 
     def clean(self):
-        print self.cleaned_data.get('user')
         try:
             user = User.objects.get(username=self.cleaned_data.get('user'))
             self.supernode = Supernodes.objects.get(

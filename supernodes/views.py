@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsUser
+from cloud_platform.helpers import is_objectid_valid
 
 from supernodes.models import Supernodes
 from supernodes.serializers import SuperNodesSerializer
@@ -61,6 +62,10 @@ class SupernodeDetail(GenericAPIView):
             raise Http404
 
     def get(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         supernode = self.get_object(pk)
         if request.user != supernode.user:
             return Response({
@@ -70,6 +75,10 @@ class SupernodeDetail(GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         supernode = self.get_object(pk)
         if request.user != supernode.user:
             return Response({
@@ -82,6 +91,10 @@ class SupernodeDetail(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         supernode = self.get_object(pk)
         if request.user != supernode.user:
             return Response({

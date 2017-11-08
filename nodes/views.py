@@ -56,7 +56,6 @@ class NodesList(ListAPIView):
                 return Response({
                     'detail': '%s is not valid ObjectId.' % kwargs.get('pk')
                 }, status=status.HTTP_400_BAD_REQUEST)
-            print "masuk"
             queryset = self.filter_queryset(
                 self.get_nodes(request.user, kwargs.get('pk'), request.GET.get('role'))
             )
@@ -99,6 +98,10 @@ class NodeDetail(GenericAPIView):
             raise Http404
 
     def get(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         node = self.get_object(pk)
         if request.user != node.user and 0 == node.is_public:
             return Response({
@@ -108,6 +111,10 @@ class NodeDetail(GenericAPIView):
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         node = self.get_object(pk)
         if request.user != node.user:
             return Response({
@@ -120,6 +127,10 @@ class NodeDetail(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         node = self.get_object(pk)
         if request.user != node.user:
             return Response({

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsUser
+from cloud_platform.helpers import is_objectid_valid
 from nodes.models import Nodes
 from sensors.models import Sensors
 from sensordatas.models import Sensordatas
@@ -100,6 +101,10 @@ class SensorDetail(GenericAPIView):
             raise Http404
 
     def get(self, request, pk, sensorid):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         data = self.get_node(pk, sensorid)
         # no access to another user private node
         if request.user != data.get('node').user and 0 == data.get('node').is_public:
@@ -110,11 +115,14 @@ class SensorDetail(GenericAPIView):
         serializer = SensorSerializer(data.get('sensor'), context={'request': request, 'nodeid': pk})
         return Response(serializer.data)
 
-    # TODO unique and ensure that label at least has 4 character
     def put(self, request, pk, sensorid):
         # check that label field was defined in the post header
         if 'label' not in request.data:
             return Response({'label': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         """
         Manual validation
@@ -151,6 +159,10 @@ class SensorDetail(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, sensorid):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         # check that nodeid and sensorid is valid
         data = self.get_node(pk, sensorid)
         # no access to delete another user sensor node

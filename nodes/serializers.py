@@ -1,11 +1,13 @@
 from rest_framework import serializers
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from nodes.models import Nodes
+from supernodes.models import Supernodes
 from users.models import User
 
 
 class NodeSerializer(DocumentSerializer):
     user = serializers.SlugRelatedField(slug_field="username", queryset=User.objects)
+    supernode = serializers.SlugRelatedField(slug_field="label", queryset=Supernodes.objects)
     label = serializers.CharField(min_length=4, max_length=28)
     # extra field
     url = serializers.HyperlinkedIdentityField(

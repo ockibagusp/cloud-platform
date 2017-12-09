@@ -25,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '%980l0kn&zsg49*c0nd77sq5@!zc*vc!m5&&fg-txh=xn8oy!2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '192.168.56.101', '192.168.43.227']
 
@@ -137,7 +137,7 @@ STATICFILES_DIRS = (
 )
 
 # mongoengine.connect(_MONGODB_NAME, host=_MONGODB_DATABASE_HOST)
-mongoengine.connect('agrihub', host='localhost')
+mongoengine.connect('agrihub', host='192.168.56.101')
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

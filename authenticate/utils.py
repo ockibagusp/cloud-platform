@@ -8,7 +8,7 @@ def node_jwt_payload_handler(node):
     payload = {
         'id': str(node.id),
         'label': node.label,
-        'subsperday': node.subsperday,
+        'pubsperday': node.pubsperday,
         'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
     }
 

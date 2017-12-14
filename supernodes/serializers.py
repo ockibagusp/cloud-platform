@@ -53,6 +53,7 @@ class SuperNodesSerializer(DocumentSerializer):
 
     def update(self, instance, validated_data):
         instance.label = validated_data.get('label', instance.label)
+        instance.secretkey = validated_data.get('secretkey', instance.secretkey)
         instance.description = validated_data.get('description', instance.description)
         instance.save()
         return instance

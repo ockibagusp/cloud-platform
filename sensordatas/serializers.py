@@ -14,7 +14,7 @@ from cloud_platform.helpers import is_objectid_valid
 
 class SensordataSerializer(DocumentSerializer):
     supernode = serializers.SlugRelatedField(slug_field="label", queryset=Supernodes.objects)
-    node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects)
+    node = serializers.SlugRelatedField(slug_field="label", queryset=Nodes.objects, required=False)
     # extra field
     testing = serializers.BooleanField(required=False)
     url = serializers.SerializerMethodField()
@@ -30,28 +30,37 @@ class SensordataSerializer(DocumentSerializer):
         return reverse('sensordata-detail', args=[obj.id], request=self.context['request'])
 
     def getnodeurl(self, obj):
-        return reverse('nodes-detail', args=[obj.node.pk], request=self.context['request'])
+        if obj.node:
+            return reverse('nodes-detail', args=[obj.node.pk], request=self.context['request'])
+        return None
 
     def getsensorurl(self, obj):
-        return reverse('node-sensor-detail', args=[obj.node.pk, str(obj.sensor)], request=self.context['request'])
+        _obj = obj.node if obj.node else obj.supernode
+        return reverse('node-sensor-detail', args=[_obj.pk, str(obj.sensor)], request=self.context['request'])
 
     @staticmethod
     def getsensorlabel(obj):
-        obj.node.sensors.get(id=obj.sensor)
-        return obj.node.sensors.get(id=obj.sensor).label
+        if obj.node:
+            return obj.node.sensors.get(id=obj.sensor).label
+        else:
+            return obj.supernode.sensors.get(id=obj.sensor).label
 
     def validate(self, data):
         super(SensordataSerializer, self).validate(data)
         node = data.get('node')
 
-        ''' -1 means node has not pubcription limit '''
+        # TODO supernode publish limit?
+        if not node:
+            return data
+
+        ''' -1 means node has not publish limit '''
         if -1 is node.pubsperday:
             return data
 
-        ''' check if node has remaining pubcription this day '''
+        ''' check if node has remaining publish this day '''
         if 0 != node.pubsperdayremain:
             return data
-        raise serializers.ValidationError('pubcription is limit.')
+        raise serializers.ValidationError('publish is limit.')
 
     def create(self, validated_data):
         supernode = validated_data.get('supernode')
@@ -61,7 +70,8 @@ class SensordataSerializer(DocumentSerializer):
         ''' create new pubcription instance '''
         pub = Sensordatas()
         pub.supernode = supernode
-        pub.node = node
+        if node:
+            pub.node = node
         pub.sensor = sensor
         pub.timestamp = validated_data.get('timestamp')
         pub.data = validated_data.get('data')
@@ -213,6 +223,8 @@ class SensordataFormatSerializer(DocumentSerializer):
         nodes = validated_data.get('nodes')
         istesting = validated_data.get('testing')
         count = 0
+
+        # TODO save sensordata in main bracket
 
         for node in nodes:
             node_obj = self.get_node(supernode.id, node.get('id'))

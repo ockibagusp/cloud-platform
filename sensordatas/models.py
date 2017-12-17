@@ -7,7 +7,7 @@ import datetime
 
 class Sensordatas(Document):
     supernode = ReferenceField(Supernodes, reverse_delete_rule=CASCADE)
-    node = ReferenceField(Nodes, reverse_delete_rule=CASCADE)
+    node = ReferenceField(Nodes, reverse_delete_rule=CASCADE, required=False, null=True)
     sensor = ObjectIdField(required=True)
     data = IntField()
     timestamp = DateTimeField(default=datetime.datetime.now())

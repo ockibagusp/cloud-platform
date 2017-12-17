@@ -82,12 +82,13 @@ class SensordataSerializer(DocumentSerializer):
 
 class SensordataFormatSerializer(DocumentSerializer):
     label = CharField()
+    sensors = ListField(required=False)
     nodes = ListField()
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Sensordatas
-        fields = ('label', 'nodes', 'testing')
+        fields = ('label', 'sensors', 'nodes', 'testing')
 
     @staticmethod
     def get_node(supenodeid, nodeid):
@@ -108,11 +109,18 @@ class SensordataFormatSerializer(DocumentSerializer):
         supernode = self.context.get('request').user
         node = Nodes()
         errors = OrderedDict()
+        # node sensors
         nodeiderror = []
         nodeformaterror = []
         nodesensorerror = []
 
-        '''validate format of node[i]'''
+        '''
+        validate format from sensors[i]
+        publish sensordata captured from supernode sensors
+        '''
+        sensorerror = self.supernode_sensors_validate(supernode, attrs.get('sensors'))
+
+        '''validate format from nodes[i]'''
         for index, nodes in enumerate(attrs.get('nodes')):
             if not nodes.get('id'):
                 nodeiderror.append(
@@ -158,10 +166,12 @@ class SensordataFormatSerializer(DocumentSerializer):
                         "node[%d].sensors: Expected a list." % index
                     )
                 else:
-                    sensorerror = self.nodes_sensors_validate(index, node, nodes.get('sensors'))
-                    if sensorerror:
-                        nodesensorerror.append(sensorerror)
+                    _sensorerror = self.nodes_sensors_validate(index, node, nodes.get('sensors'))
+                    if _sensorerror:
+                        nodesensorerror.append(_sensorerror)
         else:
+            if sensorerror:
+                errors['supernode'] = {'sensors': sensorerror}
             if nodeiderror:
                 errors['node'] = {'id': nodeiderror}
             if nodeformaterror:
@@ -218,15 +228,77 @@ class SensordataFormatSerializer(DocumentSerializer):
         else:
             return None
 
+    '''
+    helper method: validate format of supernode sensors
+    '''
+
+    def supernode_sensors_validate(self, supernode, sensors):
+        sensorerror = []
+        for jindex, sensor in enumerate(sensors):
+            if not isinstance(sensor, dict):
+                sensorerror.append(
+                    "sensors[%d]: Expected a dict." % jindex
+                )
+
+            if not sensor.get('label'):
+                sensorerror.append(
+                    "sensors[%d].label: This field may not be null." % jindex
+                )
+            else:
+                if not self.get_node_sensor(supernode.sensors, sensor.get('label')):
+                    sensorerror.append(
+                        "sensors[%d].label: Object with label=%s does not exist.."
+                        % (jindex, sensor.get('label'))
+                    )
+
+            if not sensor.get('value'):
+                sensorerror.append(
+                    "sensors[%d].value: This field may not be null." % jindex
+                )
+            else:
+                if not isinstance(sensor.get('value'), list):
+                    sensorerror.append(
+                        "sensors[%d].value: Expected a list of int." %
+                        jindex
+                    )
+                else:
+                    for kindex, values in enumerate(sensor.get('value')):
+                        if not isinstance(values[0], int) or not isinstance(values[1], int):
+                            sensorerror.append(
+                                "sensors[%d].value[%d]: Expected list of int." %
+                                (jindex, kindex)
+                            )
+        if sensorerror:
+            return sensorerror
+        else:
+            return None
+
     def create(self, validated_data):
         supernode = self.context.get('request').user
-        nodes = validated_data.get('nodes')
+        supernode_sensors = validated_data.get('sensors')
+        supernode_nodes = validated_data.get('nodes')
         istesting = validated_data.get('testing')
         count = 0
 
-        # TODO save sensordata in main bracket
+        # save data from supernode sensors
+        for sensor in supernode_sensors:
+            sensor_obj = supernode.sensors.get(label=sensor.get('label'))
+            for value in sensor.get('value'):
+                timestamp = datetime.fromtimestamp(value[1])
+                data = {'supernode': supernode.label, 'sensor': sensor_obj.id,
+                        'data': value[0], 'timestamp': timestamp, 'testing': istesting}
+                serializer = SensordataSerializer(data=data)
+                if serializer.is_valid():
+                    count += 1
+                    serializer.save()
+                else:
+                    raise serializers.ValidationError(serializer.errors)
+            if not istesting:
+                # TODO supernode publish limit?
+                ''' decrement Supernodes pubsperdayremain when node has publish limit '''
 
-        for node in nodes:
+        # save data from node sensors
+        for node in supernode_nodes:
             node_obj = self.get_node(supernode.id, node.get('id'))
             for sensor in node.get('sensors'):
                 sensor_obj = node_obj.sensors.get(label=sensor.get('label'))
@@ -245,4 +317,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                     if -1 is not node_obj.pubsperday:
                         node_obj.pubsperdayremain -= 1
                         node_obj.save()
-        return "%d sensordatas has successfully added." % count
+        if 0 != count:
+            return "%d sensordatas has successfully added." % count
+        else:
+            return "No sensordatas added."

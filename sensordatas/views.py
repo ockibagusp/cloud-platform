@@ -44,7 +44,7 @@ class SensordatasFilterUser(ListAPIView):
 class SensordatasFilterSupernode(ListAPIView):
     """
     Retrieve sensordata instance filtering by supernode.
-    @url /sensordatas/node/<node-id>
+    @url /sensordatas/supernode/<supernode-id>
 
     Filtering by subs date:
     @query ?start=<date-time>&&end=<date-time>
@@ -93,6 +93,103 @@ class SensordatasFilterSupernode(ListAPIView):
             return Sensordatas.objects.filter(supernode=supernode, timestamp__lte=filter_last)
         else:
             return Sensordatas.objects.filter(supernode=supernode)
+
+    def get(self, request, *args, **kwargs):
+        raw_queryset = self.get_queryset()
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class SensordatasFilterSupernodeSensor(ListAPIView):
+    """
+    Retrieve sensordata instance with supernode and sensor filtering.
+    @url /sensordatas/supernode/<supernode-label>/sensor/<sensor-label>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
+    """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    serializer_class = SensordataSerializer
+
+    def checksupernode(self, supernode, sensor):
+        """
+        Raise error when Nodes is not exist.
+        """
+        try:
+            supernode = Supernodes.objects.get(pk=supernode)
+            sensor = self.checksensor(supernode, sensor)
+            return {
+                'supernode': supernode,
+                'sensor': sensor
+            }
+        except Supernodes.DoesNotExist:
+            raise NotFound(detail="Nodes with id=%s does not exist." % supernode)
+
+    @staticmethod
+    def checksensor(supernode, sensorlabel):
+        """
+        Raise error when Sensors is not exist.
+        """
+        try:
+            return supernode.sensors.get(id=sensorlabel)
+        except Exception:
+            raise NotFound(detail="Sensors with id=%s does not exist." % sensorlabel)
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the sensordatas for
+        the node as determined by the node portion of the URL.
+        """
+        supernodelabel = self.kwargs['supernode']
+        sensorlabel = self.kwargs['sensor']
+
+        supernode_sensor = self.checksupernode(supernodelabel, sensorlabel)
+        # TODO supernode visibility?
+        # if self.request.user != supernode_sensor.get('node').user and 0 == supernode_sensor.get('node').is_public:
+        #     return 'unauthorized'
+
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
+        if filter_from and filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__gte=filter_from, timestamp__lte=filter_last
+            )
+        elif filter_from:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__gte=filter_from
+            )
+        elif filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__lte=filter_last
+            )
+        else:
+            return Sensordatas.objects.filter(supernode=supernode_sensor.get('supernode').id,
+                                              sensor=supernode_sensor.get('sensor').id)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()

@@ -9,7 +9,7 @@ class SensordatasService:
 
     def getbyuser(self, request):
         client = MongoClient('localhost', 27017)
-        db = client.agrihub
+        db = client.agrihub_test
         user_id = ObjectId(request.user.id)
         self.server_address = request.get_host()
         resource_address = self.server_address + "/sensordatas/user/" + request.user.username + "/"

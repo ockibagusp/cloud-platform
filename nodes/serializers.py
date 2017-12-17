@@ -35,6 +35,9 @@ class NodeSerializer(DocumentSerializer):
         user = self.context.get('request').user
         node = Nodes.objects.filter(user=user, label=value)
 
+        # _SELF_ refers to supernode whom has sensors module
+        if '_SELF_' == value:
+            raise serializers.ValidationError("_SELF_ is reserved word.")
         # when updating instance
         if None is not self.instance:
             if not node or self.instance.label == value:

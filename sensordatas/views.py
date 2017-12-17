@@ -41,9 +41,78 @@ class SensordatasFilterUser(ListAPIView):
         return Response(SensordatasService().getbyuser(request))
 
 
+class SensordatasFilterSupernode(ListAPIView):
+    """
+    Retrieve sensordata instance filtering by supernode.
+    @url /sensordatas/node/<node-id>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
+    """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    serializer_class = SensordataSerializer
+
+    @staticmethod
+    def checksupernode(pk):
+        """
+        Raise error when Supernodes is not exist.
+        """
+        try:
+            return Supernodes.objects.get(pk=pk)
+        except Exception:
+            raise NotFound(detail="Supernodes with id=%s does not exist." % pk)
+
+    def get_queryset(self):
+        supernodeid = self.kwargs['supernode']
+        supernode = self.checksupernode(supernodeid)
+        # TODO supernode visibility?
+        # if self.request.user != supernode.user and 0 == supernode.is_public:
+        #     return 'unauthorized'
+
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
+        if filter_from and filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode, timestamp__gte=filter_from, timestamp__lte=filter_last
+            )
+        elif filter_from:
+            return Sensordatas.objects.filter(supernode=supernode, timestamp__gte=filter_from)
+        elif filter_last:
+            return Sensordatas.objects.filter(supernode=supernode, timestamp__lte=filter_last)
+        else:
+            return Sensordatas.objects.filter(supernode=supernode)
+
+    def get(self, request, *args, **kwargs):
+        raw_queryset = self.get_queryset()
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class SensordatasFilterNode(ListAPIView):
     """
-    Retrieve Subscription instance with node filtering.
+    Retrieve sensordata instance with node filtering.
     @url /sensordatas/node/<node-id>
 
     Filtering by subs date:
@@ -115,7 +184,7 @@ class SensordatasFilterNode(ListAPIView):
 
 class SensordatasFilterNodeSensor(ListAPIView):
     """
-    Retrieve Subscription instance with node and sensor filtering.
+    Retrieve sensordata instance with node and sensor filtering.
     @url /sensordatas/node/<node-label>/sensor/<sensor-label>
 
     Filtering by subs date:

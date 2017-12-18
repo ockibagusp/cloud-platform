@@ -13,6 +13,34 @@ from supernodes.models import Supernodes
 from helpers import SensordatasService
 
 
+class SensordatasList(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = Sensordatas.objects.all()
+    serializer_class = SensordataSerializer
+
+    @staticmethod
+    def post(request):
+        # ensure that only nodes(provided by JWT credentials) can perform this action
+        if not isinstance(request.user, Supernodes):
+            raise exceptions.PermissionDenied("You do not have permission to perform this action.")
+
+        # TODO validate node pubsperdayremain
+        # if 0 == request.user.pubsperdayremain:
+        #     raise exceptions.PermissionDenied("Publish is limit.")
+
+        # validate POST payload format
+        serformat = SensordataFormatSerializer(data=request.data, context={'request': request})
+        if serformat.is_valid():
+            message = serformat.save()
+            return Response(
+                {"results": message},
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(serformat.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class SensordatasDetail(GenericAPIView):
     """
     Retrieve, update or delete a Subscription instance.
@@ -85,14 +113,14 @@ class SensordatasFilterSupernode(ListAPIView):
 
         if filter_from and filter_last:
             return Sensordatas.objects.filter(
-                supernode=supernode, timestamp__gte=filter_from, timestamp__lte=filter_last
+                supernode=supernode, node=None, timestamp__gte=filter_from, timestamp__lte=filter_last
             )
         elif filter_from:
-            return Sensordatas.objects.filter(supernode=supernode, timestamp__gte=filter_from)
+            return Sensordatas.objects.filter(supernode=supernode, node=None, timestamp__gte=filter_from)
         elif filter_last:
-            return Sensordatas.objects.filter(supernode=supernode, timestamp__lte=filter_last)
+            return Sensordatas.objects.filter(supernode=supernode, node=None, timestamp__lte=filter_last)
         else:
-            return Sensordatas.objects.filter(supernode=supernode)
+            return Sensordatas.objects.filter(supernode=supernode, node=None)
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()

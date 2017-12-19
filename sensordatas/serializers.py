@@ -275,6 +275,13 @@ class SensordataFormatSerializer(DocumentSerializer):
         else:
             return None
 
+    @staticmethod
+    def timestamp_validate(timestamp):
+        try:
+            return datetime.fromtimestamp(timestamp)
+        except ValueError:
+            return datetime.fromtimestamp(timestamp/1000)
+
     def create(self, validated_data):
         supernode = self.context.get('request').user
         supernode_sensors = validated_data.get('sensors')
@@ -286,7 +293,7 @@ class SensordataFormatSerializer(DocumentSerializer):
         for sensor in supernode_sensors:
             sensor_obj = supernode.sensors.get(label=sensor.get('label'))
             for value in sensor.get('value'):
-                timestamp = datetime.fromtimestamp(value[1])
+                timestamp = self.timestamp_validate(value[1])
                 data = {'supernode': supernode.label, 'sensor': sensor_obj.id,
                         'data': value[0], 'timestamp': timestamp, 'testing': istesting}
                 serializer = SensordataSerializer(data=data)

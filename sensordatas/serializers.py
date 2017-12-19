@@ -83,7 +83,7 @@ class SensordataSerializer(DocumentSerializer):
 class SensordataFormatSerializer(DocumentSerializer):
     label = CharField()
     sensors = ListField(required=False)
-    nodes = ListField()
+    nodes = ListField(required=False)
     testing = serializers.BooleanField(required=False, default=False)
 
     class Meta:
@@ -218,9 +218,10 @@ class SensordataFormatSerializer(DocumentSerializer):
                     )
                 else:
                     for kindex, values in enumerate(sensor.get('value')):
-                        if not isinstance(values[0], int) or not isinstance(values[1], int):
+                        if (not isinstance(values[0], int) and not isinstance(values[0], float)) \
+                                or not isinstance(values[1], int):
                             sensorerror.append(
-                                "node[%d].sensors[%d].value[%d]: Expected list of int." %
+                                "node[%d].sensors[%d].value[%d]: Expected list of int or float." %
                                 (index, jindex, kindex)
                             )
         if sensorerror:
@@ -263,9 +264,10 @@ class SensordataFormatSerializer(DocumentSerializer):
                     )
                 else:
                     for kindex, values in enumerate(sensor.get('value')):
-                        if not isinstance(values[0], int) or not isinstance(values[1], int):
+                        if (not isinstance(values[0], int) and not isinstance(values[0], float)) \
+                                or not isinstance(values[1], int):
                             sensorerror.append(
-                                "sensors[%d].value[%d]: Expected list of int." %
+                                "sensors[%d].value[%d]: Expected list of int or float." %
                                 (jindex, kindex)
                             )
         if sensorerror:

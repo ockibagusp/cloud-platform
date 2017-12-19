@@ -14,6 +14,7 @@ class SuperNodesSerializer(DocumentSerializer):
         view_name='supernodes-detail',
         lookup_field='pk'
     )
+    sensor_count = serializers.SerializerMethodField()
     node_count = serializers.SerializerMethodField()
     nodes_list = serializers.HyperlinkedIdentityField(
         view_name='supernodes-node-list',
@@ -22,7 +23,11 @@ class SuperNodesSerializer(DocumentSerializer):
 
     class Meta:
         model = Supernodes
-        fields = '__all__'
+        exclude = ('sensors',)
+
+    @staticmethod
+    def get_sensor_count(obj):
+        return obj.sensors.count()
 
     @staticmethod
     def get_node_count(obj):

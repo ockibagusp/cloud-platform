@@ -39,6 +39,9 @@ class SuperNodesList(ListAPIView):
             return Response({
                 'detail': 'Payload cannot be empty.'
             }, status=status.HTTP_400_BAD_REQUEST)
+        # SlugRelatedField, avoid 'query does not matching' exception on non valid data payload
+        if request.data.get('user'):
+            request.data.pop('user')
         request.data.update({'user': request.user.username})
         serializer = SuperNodesSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -84,6 +87,9 @@ class SupernodeDetail(GenericAPIView):
             return Response({
                 'detail': 'You can not update another person supernode.'
             }, status=status.HTTP_403_FORBIDDEN)
+        # SlugRelatedField, avoid 'query does not matching' exception on non valid data payload
+        if request.data.get('user'):
+            request.data.pop('user')
         serializer = SuperNodesSerializer(supernode, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()

@@ -5,6 +5,7 @@ from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsUser
 from nodes.models import Nodes
+from supernodes.models import Supernodes
 from nodes.serializers import NodeSerializer
 from nodes.forms import NodePublishResetForm
 
@@ -75,8 +76,16 @@ class NodesList(ListAPIView):
             return Response({
                 'detail': 'Payload cannot be empty.'
             }, status=status.HTTP_400_BAD_REQUEST)
+        supernode = Supernodes()
+        # SlugRelatedField, avoid 'query does not matching' exception on non valid data payload
+        if request.data.get('supernode'):
+            supernode = Supernodes.objects.filter(user=request.user, label=request.data.get('supernode'))
+            if not supernode:
+                return Response({
+                    'supernode': ['This field must be valid supernode label']
+                }, status=status.HTTP_400_BAD_REQUEST)
         request.data.update({'user': request.user.username})
-        serializer = NodeSerializer(data=request.data, context={'request': request})
+        serializer = NodeSerializer(data=request.data, context={'request': request, 'supernode': supernode[0]})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -120,6 +129,13 @@ class NodeDetail(GenericAPIView):
             return Response({
                 'detail': 'You can not update another person node.'
             }, status=status.HTTP_403_FORBIDDEN)
+
+        # SlugRelatedField, avoid 'query does not matching' exception on non valid data payload
+        if request.data.get('user'):
+            request.data.pop('user')
+        if request.data.get('supernode'):
+            request.data.pop('supernode')
+
         serializer = NodeSerializer(node, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()

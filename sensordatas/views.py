@@ -114,13 +114,17 @@ class SensordatasFilterSupernode(ListAPIView):
         if filter_from and filter_last:
             return Sensordatas.objects.filter(
                 supernode=supernode, node=None, timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
-            return Sensordatas.objects.filter(supernode=supernode, node=None, timestamp__gte=filter_from)
+            return Sensordatas.objects.filter(
+                supernode=supernode, node=None, timestamp__gte=filter_from
+            ).order_by('-timestamp')
         elif filter_last:
-            return Sensordatas.objects.filter(supernode=supernode, node=None, timestamp__lte=filter_last)
+            return Sensordatas.objects.filter(
+                supernode=supernode, node=None, timestamp__lte=filter_last
+            ).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(supernode=supernode, node=None)
+            return Sensordatas.objects.filter(supernode=supernode, node=None).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -204,20 +208,22 @@ class SensordatasFilterSupernodeSensor(ListAPIView):
             return Sensordatas.objects.filter(
                 supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
                 timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
             return Sensordatas.objects.filter(
                 supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
                 timestamp__gte=filter_from
-            )
+            ).order_by('-timestamp')
         elif filter_last:
             return Sensordatas.objects.filter(
                 supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
                 timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(supernode=supernode_sensor.get('supernode').id,
-                                              sensor=supernode_sensor.get('sensor').id)
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id,
+                sensor=supernode_sensor.get('sensor').id
+            ).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -283,13 +289,13 @@ class SensordatasFilterNode(ListAPIView):
         if filter_from and filter_last:
             return Sensordatas.objects.filter(
                 node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
-            return Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
+            return Sensordatas.objects.filter(node=node, timestamp__gte=filter_from).order_by('-timestamp')
         elif filter_last:
-            return Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
+            return Sensordatas.objects.filter(node=node, timestamp__lte=filter_last).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(node=node)
+            return Sensordatas.objects.filter(node=node).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -372,19 +378,21 @@ class SensordatasFilterNodeSensor(ListAPIView):
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from
-            )
+            ).order_by('-timestamp')
         elif filter_last:
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
+            return Sensordatas.objects.filter(
+                node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id
+            ).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()

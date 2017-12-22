@@ -33,7 +33,8 @@ class NodeSerializer(DocumentSerializer):
         :return: validated value
         """
         user = self.context.get('request').user
-        node = Nodes.objects.filter(user=user, label=value)
+        supernode = self.context.get('supernode')
+        node = Nodes.objects.filter(user=user, supernode=supernode, label=value)
 
         # _SELF_ refers to supernode whom has sensors module
         if '_SELF_' == value:

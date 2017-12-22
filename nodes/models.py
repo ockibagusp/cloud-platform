@@ -1,11 +1,17 @@
-from mongoengine.document import Document
-from mongoengine import StringField, ReferenceField, EmbeddedDocumentListField, IntField, CASCADE
+from mongoengine.document import Document, EmbeddedDocument
+from mongoengine import StringField, IntField, FloatField, ReferenceField, EmbeddedDocumentField, \
+    EmbeddedDocumentListField, CASCADE
 from sensors.models import Sensors
 from users.models import User
 from supernodes.models import Supernodes
 
 
-# delete embeded -> Nodes.objects(label="FILKOM_1").update_one(pull__sensors__label="HUMIDITY")
+class Coordinates(EmbeddedDocument):
+    lat = FloatField(required=True, null=False)
+    long = FloatField(required=True, null=False)
+
+    def __unicode__(self):
+        return str([self.lat, self.long])
 
 
 class Nodes(Document):
@@ -17,3 +23,4 @@ class Nodes(Document):
     pubsperday = IntField(default=0)
     pubsperdayremain = IntField(default=0)
     sensors = EmbeddedDocumentListField(document_type=Sensors)
+    coordinates = EmbeddedDocumentField(document_type=Coordinates, required=False)

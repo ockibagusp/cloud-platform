@@ -7,7 +7,7 @@ from authenticate.permissions import IsUser
 from nodes.models import Nodes
 from supernodes.models import Supernodes
 from nodes.serializers import NodeSerializer
-from nodes.forms import NodePublishResetForm
+from nodes.forms import NodePublishResetForm, NodeDuplicateForm
 
 from cloud_platform.helpers import is_objectid_valid, is_url_regex_match
 
@@ -186,4 +186,42 @@ class NodePublishReset(GenericAPIView):
             node.save()
             serializer = NodeSerializer(node, context={'request': request})
             return Response(serializer.data)
+        return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NodeDuplicate(GenericAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Nodes.objects.get(pk=pk)
+        except Exception:
+            raise Http404
+
+    def post(self, request):
+        form = NodeDuplicateForm(request.data)
+        if form.is_valid():
+            node = self.get_object(form.cleaned_data.get('id'))
+            if request.user != node.user:
+                return Response({
+                    'detail': 'You can not duplicate another person node.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            bulk_insert = []
+            for i in range(form.cleaned_data.get('count')):
+                bulk_insert.append(Nodes(
+                    user=request.user,
+                    supernode=node.supernode,
+                    label=node.label + '_' + str(i+1),
+                    secretkey=node.secretkey,
+                    is_public=node.is_public,
+                    pubsperday=node.pubsperday,
+                    pubsperdayremain=node.pubsperday
+                ))
+            Nodes.objects.insert(bulk_insert)
+            return Response(
+                {"results": ("%d duplicate has successfully added." % len(bulk_insert))},
+                status=status.HTTP_201_CREATED
+            )
         return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -23,4 +23,4 @@ class Nodes(Document):
     pubsperday = IntField(default=0)
     pubsperdayremain = IntField(default=0)
     sensors = EmbeddedDocumentListField(document_type=Sensors)
-    coordinates = EmbeddedDocumentField(document_type=Coordinates, required=False)
+    coordinates = EmbeddedDocumentField(document_type=Coordinates, required=False, null=True)

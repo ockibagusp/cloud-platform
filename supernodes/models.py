@@ -21,7 +21,7 @@ class Supernodes(Document):
     secretkey = StringField(required=True, max_length=32)
     description = StringField(max_length=140, required=False)
     sensors = EmbeddedDocumentListField(document_type=Sensors)
-    coordinates = EmbeddedDocumentField(document_type=Coordinates, required=False)
+    coordinates = EmbeddedDocumentField(document_type=Coordinates, required=False, null=True)
 
     def __unicode__(self):
         return self.label

@@ -82,8 +82,12 @@ class NodesList(ListAPIView):
             supernode = Supernodes.objects.filter(user=request.user, label=request.data.get('supernode'))
             if not supernode:
                 return Response({
-                    'supernode': ['This field must be valid supernode label']
+                    'supernode': ['This field must be valid supernode label.']
                 }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({
+                'supernode': ['This field is required.']
+            }, status=status.HTTP_400_BAD_REQUEST)
         request.data.update({'user': request.user.username})
         serializer = NodeSerializer(data=request.data, context={'request': request, 'supernode': supernode[0]})
         if serializer.is_valid():

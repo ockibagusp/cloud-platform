@@ -1,8 +1,10 @@
+from collections import OrderedDict
+
 from rest_framework import serializers
 from rest_framework_mongoengine.serializers import DocumentSerializer
 from users.models import User
 from nodes.models import Nodes
-from supernodes.models import Supernodes
+from supernodes.models import Supernodes, Coordinates
 
 
 class SuperNodesSerializer(DocumentSerializer):
@@ -60,5 +62,11 @@ class SuperNodesSerializer(DocumentSerializer):
         instance.label = validated_data.get('label', instance.label)
         instance.secretkey = validated_data.get('secretkey', instance.secretkey)
         instance.description = validated_data.get('description', instance.description)
+        _coordinates = validated_data.get('coordinates', instance.coordinates)
+
+        if isinstance(_coordinates, OrderedDict):
+            _coordinates = Coordinates(lat=_coordinates['lat'], long=_coordinates['long'])
+
+        instance.coordinates = _coordinates
         instance.save()
         return instance

@@ -7,8 +7,7 @@ from rest_framework_jwt.settings import api_settings
 def node_jwt_payload_handler(node):
     payload = {
         'id': str(node.id),
-        'label': node.label,
-        'pubsperday': node.pubsperday,
+        'type': 2,
         'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
     }
 
@@ -30,16 +29,10 @@ def node_jwt_payload_handler(node):
 
 def user_jwt_payload_handler(user):
     payload = {
-        'user_id': str(user.pk),
-        'email': user.email,
-        'username': user.username,
-        'is_admin': user.is_admin,
+        'id': str(user.id),
+        'type': 1,
         'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA
     }
-    if isinstance(user.pk, uuid.UUID):
-        payload['user_id'] = str(user.pk)
-
-    payload['username'] = user.username
 
     # Include original issued at time for a brand new token,
     # to allow token refresh
@@ -57,15 +50,9 @@ def user_jwt_payload_handler(user):
     return payload
 
 
-def jwt_get_label_from_payload_handler(payload):
+def jwt_get_type_from_payload_handler(payload):
     """
     Override this function if label is formatted differently in payload
     """
-    return payload.get('label')
+    return payload.get('type')
 
-
-def jwt_get_username_from_payload_handler(payload):
-    """
-    Override this function if label is formatted differently in payload
-    """
-    return payload.get('username')

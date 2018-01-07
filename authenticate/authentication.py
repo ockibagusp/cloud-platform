@@ -6,7 +6,7 @@ from rest_framework.authentication import (
     BaseAuthentication, get_authorization_header
 )
 from rest_framework_jwt.settings import api_settings
-from authenticate.utils import jwt_get_label_from_payload_handler, jwt_get_username_from_payload_handler
+from authenticate.utils import jwt_get_type_from_payload_handler
 from nodes.models import Nodes
 from users.models import User
 
@@ -47,23 +47,22 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
         """
         Returns an active user that matches the payload's user id and email.
         """
-        label = jwt_get_label_from_payload_handler(payload)
-        username = jwt_get_username_from_payload_handler(payload)
+        _type = jwt_get_type_from_payload_handler(payload)
 
-        if label:
+        if 1 == _type:
+            try:
+                user = User.objects.get(id=payload.get('id'))
+            except User.DoesNotExist:
+                msg = _('Invalid signature.')
+                raise exceptions.AuthenticationFailed(msg)
+            return user
+        elif 2 == _type:
             try:
                 node = Nodes.objects.get(id=payload.get('id'))
             except Nodes.DoesNotExist:
                 msg = _('Invalid signature.')
                 raise exceptions.AuthenticationFailed(msg)
             return node
-        elif username:
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                msg = _('Invalid signature.')
-                raise exceptions.AuthenticationFailed(msg)
-            return user
         else:
             msg = _('Invalid payload.')
             raise exceptions.AuthenticationFailed(msg)

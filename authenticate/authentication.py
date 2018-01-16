@@ -6,8 +6,8 @@ from rest_framework.authentication import (
     BaseAuthentication, get_authorization_header
 )
 from rest_framework_jwt.settings import api_settings
-from authenticate.utils import jwt_get_label_from_payload_handler, jwt_get_username_from_payload_handler
-from supernodes.models import Supernodes
+from authenticate.utils import jwt_get_type_from_payload_handler
+from nodes.models import Nodes
 from users.models import User
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -47,23 +47,22 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
         """
         Returns an active user that matches the payload's user id and email.
         """
-        label = jwt_get_label_from_payload_handler(payload)
-        username = jwt_get_username_from_payload_handler(payload)
+        _type = jwt_get_type_from_payload_handler(payload)
 
-        if label:
+        if 1 == _type:
             try:
-                node = Supernodes.objects.get(id=payload.get('id'))
-            except Supernodes.DoesNotExist:
-                msg = _('Invalid signature.')
-                raise exceptions.AuthenticationFailed(msg)
-            return node
-        elif username:
-            try:
-                user = User.objects.get(username=username)
+                user = User.objects.get(id=payload.get('id'))
             except User.DoesNotExist:
                 msg = _('Invalid signature.')
                 raise exceptions.AuthenticationFailed(msg)
             return user
+        elif 2 == _type:
+            try:
+                node = Nodes.objects.get(id=payload.get('id'))
+            except Nodes.DoesNotExist:
+                msg = _('Invalid signature.')
+                raise exceptions.AuthenticationFailed(msg)
+            return node
         else:
             msg = _('Invalid payload.')
             raise exceptions.AuthenticationFailed(msg)
@@ -111,7 +110,6 @@ except ImportError:
     """Handle older versions of Django"""
     from django.utils.hashcompat import md5_constructor, sha_constructor
 
-
     def get_hexdigest(algorithm, salt, raw_password):
         raw_password, salt = smart_str(raw_password), smart_str(salt)
         if algorithm == 'md5':
@@ -120,11 +118,9 @@ except ImportError:
             return sha_constructor(salt + raw_password).hexdigest()
         raise ValueError('Got unknown password algorithm type in password')
 
-
     def check_password(raw_password, password):
         algo, salt, hash = password.split('$')
         return hash == get_hexdigest(algo, salt, raw_password)
-
 
     def make_password(raw_password):
         from random import random

@@ -19,7 +19,7 @@ class SuperNodeAuthForm(forms.Form):
             )
             return self.supernode
         except (Supernodes.DoesNotExist, User.DoesNotExist):
-            raise forms.ValidationError("Node authenticate failure.")
+            raise forms.ValidationError("Supernode authenticate failure.")
 
 
 class UserAuthForm(forms.Form):

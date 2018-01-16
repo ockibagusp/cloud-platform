@@ -17,7 +17,7 @@ from django.conf.urls import url, include
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from authenticate.views import NodeTokenCreator, UserTokenCreator
+from authenticate.views import SupernodeTokenCreator, UserTokenCreator
 from users.views import ResearcherRegistration
 
 
@@ -33,6 +33,6 @@ urlpatterns = [
     url(r'^nodes/', include('nodes.urls')),
     url(r'^sensordatas/', include('sensordatas.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),
-    url(r'^node-auth/$', NodeTokenCreator.as_view()),
+    url(r'^supernode-auth/$', SupernodeTokenCreator.as_view()),
     url(r'^register/$', ResearcherRegistration.as_view())
 ]

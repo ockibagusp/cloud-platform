@@ -30,7 +30,7 @@ class UserTokenCreator(APIView):
         return token.decode('unicode_escape')
 
 
-class NodeTokenCreator(APIView):
+class SupernodeTokenCreator(APIView):
     """
     Create token if node credentials was provided and valid.
     """

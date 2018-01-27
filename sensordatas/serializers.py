@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from datetime import datetime
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ListField, CharField
 from rest_framework.reverse import reverse
 from rest_framework_mongoengine.serializers import DocumentSerializer
@@ -44,40 +45,6 @@ class SensordataSerializer(DocumentSerializer):
             return obj.node.sensors.get(id=obj.sensor).label
         else:
             return obj.supernode.sensors.get(id=obj.sensor).label
-
-    def validate(self, data):
-        super(SensordataSerializer, self).validate(data)
-        node = data.get('node')
-
-        # TODO supernode publish limit?
-        if not node:
-            return data
-
-        ''' -1 means node has not publish limit '''
-        if -1 is node.pubsperday:
-            return data
-
-        ''' check if node has remaining publish this day '''
-        if 0 != node.pubsperdayremain:
-            return data
-        raise serializers.ValidationError('publish is limit.')
-
-    def create(self, validated_data):
-        supernode = validated_data.get('supernode')
-        node = validated_data.get('node')
-        sensor = validated_data.get('sensor')
-
-        ''' create new pubcription instance '''
-        pub = Sensordatas()
-        pub.supernode = supernode
-        if node:
-            pub.node = node
-        pub.sensor = sensor
-        pub.timestamp = validated_data.get('timestamp')
-        pub.data = validated_data.get('data')
-        if not validated_data.get('testing'):
-            pub.save()
-        return pub
 
 
 class SensordataFormatSerializer(DocumentSerializer):
@@ -287,21 +254,26 @@ class SensordataFormatSerializer(DocumentSerializer):
         supernode_sensors = validated_data.get('sensors')
         supernode_nodes = validated_data.get('nodes')
         istesting = validated_data.get('testing')
-        count = 0
+        sensordatas_insert = []
+
+        rejected_detail = []
+        success_count = 0
+        rejected_count = 0
 
         # save data from supernode sensors
         for sensor in supernode_sensors:
             sensor_obj = supernode.sensors.get(label=sensor.get('label'))
             for value in sensor.get('value'):
                 timestamp = self.timestamp_validate(value[1])
-                data = {'supernode': supernode.label, 'sensor': sensor_obj.id,
-                        'data': value[0], 'timestamp': timestamp, 'testing': istesting}
-                serializer = SensordataSerializer(data=data)
-                if serializer.is_valid():
-                    count += 1
-                    serializer.save()
-                else:
-                    raise serializers.ValidationError(serializer.errors)
+                # TODO is re-validate data using serializer required?
+                success_count += 1
+                sensordatas_insert.append(
+                    Sensordatas(
+                        supernode=supernode.label, sensor=sensor_obj.id,
+                        data=value[0], timestamp=timestamp
+                    )
+                )
+
             if not istesting:
                 # TODO supernode publish limit?
                 ''' decrement Supernodes pubsperdayremain when node has publish limit '''
@@ -309,24 +281,49 @@ class SensordataFormatSerializer(DocumentSerializer):
         # save data from node sensors
         for node in supernode_nodes:
             node_obj = self.get_node(supernode.id, node.get('id'))
+
+            ''' check if node has remaining publish this day '''
+            if -1 != node_obj.pubsperday and 0 == node_obj.pubsperdayremain:
+                rejected_detail.append(node_obj.label + ': publish is limit.')
+                for sensor in node.get('sensors'):
+                    for _ in sensor.get('value'):
+                        rejected_count += 1
+                continue
+
             for sensor in node.get('sensors'):
                 sensor_obj = node_obj.sensors.get(label=sensor.get('label'))
                 for value in sensor.get('value'):
                     timestamp = datetime.fromtimestamp(value[1])
-                    data = {'supernode': supernode.label, 'node': node_obj.label, 'sensor': sensor_obj.id,
-                            'data': value[0], 'timestamp': timestamp, 'testing': istesting}
-                    serializer = SensordataSerializer(data=data)
-                    if serializer.is_valid():
-                        count += 1
-                        serializer.save()
-                    else:
-                        raise serializers.ValidationError(serializer.errors)
-                if not istesting:
-                    ''' decrement Nodes pubsperdayremain when node has publish limit '''
-                    if -1 is not node_obj.pubsperday:
-                        node_obj.pubsperdayremain -= 1
-                        node_obj.save()
-        if 0 != count:
-            return "%d sensordatas has successfully added." % count
+                    # TODO is re-validate data using serializer required?
+                    success_count += 1
+                    sensordatas_insert.append(
+                        Sensordatas(
+                            supernode=supernode.label, node=node_obj.label,
+                            sensor=sensor_obj.id,
+                            data=value[0], timestamp=timestamp
+                        )
+                    )
+
+            if not istesting:
+                ''' decrement Nodes pubsperdayremain when node has publish limit '''
+                if -1 is not node_obj.pubsperday:
+                    node_obj.pubsperdayremain -= 1
+                    node_obj.save()
+                # bulk insert
+                Sensordatas.objects.insert(sensordatas_insert)
+
+        if 0 != success_count:
+            return {
+                'info': "%d sensordata(s) has successfully added. %d sensordata(s) was rejected" %
+                        (success_count, rejected_count),
+                'detail': rejected_detail if rejected_detail else None
+            }
         else:
-            return "No sensordatas added."
+            if 0 != rejected_count:
+                return {
+                    'info': "%d sensordata(s) was rejected" % rejected_count,
+                    'detail': rejected_detail if rejected_detail else None
+                }
+            return {
+                'info': "No sensordatas added."
+            }

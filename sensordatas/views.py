@@ -9,6 +9,7 @@ from authenticate.permissions import IsAuthenticated, IsUser
 from sensordatas.models import Sensordatas
 from sensordatas.serializers import SensordataSerializer, SensordataFormatSerializer
 from nodes.models import Nodes
+from supernodes.models import Supernodes
 from helpers import SensordatasService
 
 
@@ -21,17 +22,19 @@ class SensordatasList(ListAPIView):
     @staticmethod
     def post(request):
         # ensure that only nodes(provided by JWT credentials) can perform this action
-        if not isinstance(request.user, Nodes):
+        if not isinstance(request.user, Supernodes):
             raise exceptions.PermissionDenied("You do not have permission to perform this action.")
 
-        if 0 == request.user.subsperdayremain:
-            raise exceptions.PermissionDenied("Publish is limit.")
+        # TODO validate node pubsperdayremain
+        # if 0 == request.user.pubsperdayremain:
+        #     raise exceptions.PermissionDenied("Publish is limit.")
 
+        # validate POST payload format
         serformat = SensordataFormatSerializer(data=request.data, context={'request': request})
         if serformat.is_valid():
-            data = serformat.save()
+            message = serformat.save()
             return Response(
-                {"results": SensordataSerializer(data, many=True, context={'request': request}).data},
+                {"results": message},
                 status=status.HTTP_201_CREATED
             )
         else:
@@ -58,10 +61,18 @@ class SensordatasDetail(GenericAPIView):
         return Response(serializer.data)
 
 
-class SensordatasFilterUser0(ListAPIView):
+class SensordatasFilterUser(ListAPIView):
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+
+    def get(self, request, *args, **kwargs):
+        return Response(SensordatasService().getbyuser(request))
+
+
+class SensordatasFilterSupernode(ListAPIView):
     """
-    Retrieve Subscription instance with user filtering.
-    @url /sensordatas/user/<user-username>
+    Retrieve sensordata instance filtering by supernode.
+    @url /sensordatas/supernode/<supernode-id>
 
     Filtering by subs date:
     @query ?start=<date-time>&&end=<date-time>
@@ -80,51 +91,159 @@ class SensordatasFilterUser0(ListAPIView):
     permission_classes = (IsUser,)
     serializer_class = SensordataSerializer
 
+    @staticmethod
+    def checksupernode(pk):
+        """
+        Raise error when Supernodes is not exist.
+        """
+        try:
+            return Supernodes.objects.get(pk=pk)
+        except Exception:
+            raise NotFound(detail="Supernodes with id=%s does not exist." % pk)
+
     def get_queryset(self):
-        """
-        This view should return a list of all the sensordatas
-        for the currently authenticated user.
-        """
-        user = self.request.user
-
-        if user.username != self.kwargs.get('user'):
-            raise PermissionDenied(detail="Your credential and URL prefix must be same.")
-
-        nodes = Nodes.objects(user=user)
-        tmp = []
+        supernodeid = self.kwargs['supernode']
+        supernode = self.checksupernode(supernodeid)
+        # TODO supernode visibility?
+        # if self.request.user != supernode.user and 0 == supernode.is_public:
+        #     return 'unauthorized'
 
         filter_from = self.request.GET.get('start')
         filter_last = self.request.GET.get('end')
 
-        for node in nodes:
-            if filter_from and filter_last:
-                all_subs = Sensordatas.objects.filter(
-                    node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
-                )
-            elif filter_from:
-                all_subs = Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
-            elif filter_last:
-                all_subs = Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
-            else:
-                all_subs = Sensordatas.objects.filter(node=node)
-
-            for sub in all_subs:
-                tmp.append(sub)
-        return tmp
-
-
-class SensordatasFilterUser(ListAPIView):
-
-    authentication_classes = (JSONWebTokenAuthentication,)
-    permission_classes = (IsUser,)
+        if filter_from and filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode, node=None, timestamp__gte=filter_from, timestamp__lte=filter_last
+            ).order_by('-timestamp')
+        elif filter_from:
+            return Sensordatas.objects.filter(
+                supernode=supernode, node=None, timestamp__gte=filter_from
+            ).order_by('-timestamp')
+        elif filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode, node=None, timestamp__lte=filter_last
+            ).order_by('-timestamp')
+        else:
+            return Sensordatas.objects.filter(supernode=supernode, node=None).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
-        return Response(SensordatasService().getbyuser(request))
+        raw_queryset = self.get_queryset()
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class SensordatasFilterSupernodeSensor(ListAPIView):
+    """
+    Retrieve sensordata instance with supernode and sensor filtering.
+    @url /sensordatas/supernode/<supernode-label>/sensor/<sensor-label>
+
+    Filtering by subs date:
+    @query ?start=<date-time>&&end=<date-time>
+
+    From to Last filter
+    @query ?start=2016-11-24 16:00:00&&end=2016-12-24 16:00:00
+
+    From to ... filter
+    @query ?start=2016-11-24 16:00:00
+
+    ... to Last filter
+    From to Last filter
+    @query ?end=2016-12-24 16:00:00
+    """
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsUser,)
+    serializer_class = SensordataSerializer
+
+    def checksupernode(self, supernode, sensor):
+        """
+        Raise error when Nodes is not exist.
+        """
+        try:
+            supernode = Supernodes.objects.get(pk=supernode)
+            sensor = self.checksensor(supernode, sensor)
+            return {
+                'supernode': supernode,
+                'sensor': sensor
+            }
+        except Supernodes.DoesNotExist:
+            raise NotFound(detail="Nodes with id=%s does not exist." % supernode)
+
+    @staticmethod
+    def checksensor(supernode, sensorlabel):
+        """
+        Raise error when Sensors is not exist.
+        """
+        try:
+            return supernode.sensors.get(id=sensorlabel)
+        except Exception:
+            raise NotFound(detail="Sensors with id=%s does not exist." % sensorlabel)
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the sensordatas for
+        the node as determined by the node portion of the URL.
+        """
+        supernodelabel = self.kwargs['supernode']
+        sensorlabel = self.kwargs['sensor']
+
+        supernode_sensor = self.checksupernode(supernodelabel, sensorlabel)
+        # TODO supernode visibility?
+        # if self.request.user != supernode_sensor.get('node').user and 0 == supernode_sensor.get('node').is_public:
+        #     return 'unauthorized'
+
+        filter_from = self.request.GET.get('start')
+        filter_last = self.request.GET.get('end')
+
+        if filter_from and filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__gte=filter_from, timestamp__lte=filter_last
+            ).order_by('-timestamp')
+        elif filter_from:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__gte=filter_from
+            ).order_by('-timestamp')
+        elif filter_last:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id, sensor=supernode_sensor.get('sensor').id,
+                timestamp__lte=filter_last
+            ).order_by('-timestamp')
+        else:
+            return Sensordatas.objects.filter(
+                supernode=supernode_sensor.get('supernode').id,
+                sensor=supernode_sensor.get('sensor').id
+            ).order_by('-timestamp')
+
+    def get(self, request, *args, **kwargs):
+        raw_queryset = self.get_queryset()
+        if 'unauthorized' == raw_queryset:
+            return Response({
+                'detail': 'Not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        queryset = self.filter_queryset(raw_queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = SensordataSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class SensordatasFilterNode(ListAPIView):
     """
-    Retrieve Subscription instance with node filtering.
+    Retrieve sensordata instance with node filtering.
     @url /sensordatas/node/<node-id>
 
     Filtering by subs date:
@@ -170,13 +289,13 @@ class SensordatasFilterNode(ListAPIView):
         if filter_from and filter_last:
             return Sensordatas.objects.filter(
                 node=node, timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
-            return Sensordatas.objects.filter(node=node, timestamp__gte=filter_from)
+            return Sensordatas.objects.filter(node=node, timestamp__gte=filter_from).order_by('-timestamp')
         elif filter_last:
-            return Sensordatas.objects.filter(node=node, timestamp__lte=filter_last)
+            return Sensordatas.objects.filter(node=node, timestamp__lte=filter_last).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(node=node)
+            return Sensordatas.objects.filter(node=node).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()
@@ -196,7 +315,7 @@ class SensordatasFilterNode(ListAPIView):
 
 class SensordatasFilterNodeSensor(ListAPIView):
     """
-    Retrieve Subscription instance with node and sensor filtering.
+    Retrieve sensordata instance with node and sensor filtering.
     @url /sensordatas/node/<node-label>/sensor/<sensor-label>
 
     Filtering by subs date:
@@ -259,19 +378,21 @@ class SensordatasFilterNodeSensor(ListAPIView):
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from, timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         elif filter_from:
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__gte=filter_from
-            )
+            ).order_by('-timestamp')
         elif filter_last:
             return Sensordatas.objects.filter(
                 node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id,
                 timestamp__lte=filter_last
-            )
+            ).order_by('-timestamp')
         else:
-            return Sensordatas.objects.filter(node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id)
+            return Sensordatas.objects.filter(
+                node=node_sensor.get('node').id, sensor=node_sensor.get('sensor').id
+            ).order_by('-timestamp')
 
     def get(self, request, *args, **kwargs):
         raw_queryset = self.get_queryset()

@@ -21,6 +21,7 @@ class UserSerializer(DocumentSerializer):
     '''
     overide validate to hashing user password
     '''
+
     @staticmethod
     def validate_password(value):
         return make_password(value)

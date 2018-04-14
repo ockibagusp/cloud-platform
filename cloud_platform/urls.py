@@ -25,9 +25,11 @@ from users.views import ResearcherRegistration
 def welcome(request):
     return Response({"message": "Welcome to AgriHub API!"})
 
+
 urlpatterns = [
     url(r'^$', welcome),
     url(r'^users/', include('users.urls')),
+    url(r'^supernodes/', include('supernodes.urls')),
     url(r'^nodes/', include('nodes.urls')),
     url(r'^sensordatas/', include('sensordatas.urls')),
     url(r'^user-auth/', UserTokenCreator.as_view()),

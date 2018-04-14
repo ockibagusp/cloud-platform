@@ -7,7 +7,7 @@ from rest_framework.authentication import (
 )
 from rest_framework_jwt.settings import api_settings
 from authenticate.utils import jwt_get_label_from_payload_handler, jwt_get_username_from_payload_handler
-from nodes.models import Nodes
+from supernodes.models import Supernodes
 from users.models import User
 
 jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
@@ -40,9 +40,10 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
 
         node = self.authenticate_credentials(payload)
 
-        return (node, jwt_value)
+        return node, jwt_value
 
-    def authenticate_credentials(self, payload):
+    @staticmethod
+    def authenticate_credentials(payload):
         """
         Returns an active user that matches the payload's user id and email.
         """
@@ -51,8 +52,8 @@ class BaseJSONWebTokenAuthentication(BaseAuthentication):
 
         if label:
             try:
-                node = Nodes.objects.get(id=payload.get('id'))
-            except Nodes.DoesNotExist:
+                node = Supernodes.objects.get(id=payload.get('id'))
+            except Supernodes.DoesNotExist:
                 msg = _('Invalid signature.')
                 raise exceptions.AuthenticationFailed(msg)
             return node
@@ -110,6 +111,7 @@ except ImportError:
     """Handle older versions of Django"""
     from django.utils.hashcompat import md5_constructor, sha_constructor
 
+
     def get_hexdigest(algorithm, salt, raw_password):
         raw_password, salt = smart_str(raw_password), smart_str(salt)
         if algorithm == 'md5':
@@ -118,9 +120,11 @@ except ImportError:
             return sha_constructor(salt + raw_password).hexdigest()
         raise ValueError('Got unknown password algorithm type in password')
 
+
     def check_password(raw_password, password):
         algo, salt, hash = password.split('$')
         return hash == get_hexdigest(algo, salt, raw_password)
+
 
     def make_password(raw_password):
         from random import random

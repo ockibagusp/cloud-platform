@@ -5,5 +5,5 @@ from models import *
 
 connect('agrihub')
 
-for post in Nodes.objects :
+for post in Nodes.objects:
     post.update(subsperdayremain=post.subsperday)

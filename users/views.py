@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework_mongoengine.generics import ListAPIView, GenericAPIView
 from authenticate.authentication import JSONWebTokenAuthentication
 from authenticate.permissions import IsAdmin
+from cloud_platform.helpers import is_objectid_valid
 from users.models import User
 from users.serializers import UserSerializer
 
@@ -68,11 +69,19 @@ class UserDetail(GenericAPIView):
             raise Http404
 
     def get(self, request, pk):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         user = self.get_user(pk)
         serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         user = self.get_user(pk)
         # ensure that super admin only edited by him/his self
         if "webmaster" == user.username:
@@ -86,6 +95,10 @@ class UserDetail(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
+        if not is_objectid_valid(pk):
+            return Response({
+                'detail': '%s is not valid ObjectId.' % pk
+            }, status=status.HTTP_400_BAD_REQUEST)
         user = self.get_user(pk)
         # super admin can not be deleted
         if "webmaster" == user.username:

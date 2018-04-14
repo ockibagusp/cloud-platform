@@ -25,12 +25,12 @@ class Db:
     def migrate(self):
         print('generate initial tables')
         sql_query_credentials = "CREATE TABLE IF NOT EXISTS `credentials` (" \
-            "`token`	TEXT," \
-            "`subsperdayremain`	INTEGER DEFAULT 0" \
-            ")"
+                                "`token`	TEXT," \
+                                "`subsperdayremain`	INTEGER DEFAULT 0" \
+                                ")"
         sql_query_subs_scedule = "CREATE TABLE IF NOT EXISTS `subs_schedule` (" \
-            "`id`	INTEGER PRIMARY KEY AUTOINCREMENT," \
-            "`time`	TEXT)"
+                                 "`id`	INTEGER PRIMARY KEY AUTOINCREMENT," \
+                                 "`time`	TEXT)"
         self.cursor.execute(sql_query_credentials)
         self.cursor.execute(sql_query_subs_scedule)
         self.conn.commit()

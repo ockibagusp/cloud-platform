@@ -219,7 +219,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                 else:
                     for kindex, values in enumerate(sensor.get('value')):
                         if (not isinstance(values[0], int) and not isinstance(values[0], float)) \
-                                or not isinstance(values[1], int):
+                                or not isinstance(values[1], int) and not isinstance(values[1], float):
                             sensorerror.append(
                                 "node[%d].sensors[%d].value[%d]: Expected list of int or float." %
                                 (index, jindex, kindex)
@@ -265,7 +265,7 @@ class SensordataFormatSerializer(DocumentSerializer):
                 else:
                     for kindex, values in enumerate(sensor.get('value')):
                         if (not isinstance(values[0], int) and not isinstance(values[0], float)) \
-                                or not isinstance(values[1], int):
+                                or not isinstance(values[1], int) and not isinstance(values[1], float):
                             sensorerror.append(
                                 "sensors[%d].value[%d]: Expected list of int or float." %
                                 (jindex, kindex)

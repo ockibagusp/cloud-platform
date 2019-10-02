@@ -1,5 +1,5 @@
 pymongo==3.3.1
-Django==1.10.3
+Django==1.11.23
 pymongo==3.3.1
 mongoengine==0.10.6
 djangorestframework_jwt==1.8.0

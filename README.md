@@ -16,3 +16,6 @@ djangorestframework==3.5.3
 django-cors-headers==1.3.1
 paho-mqtt==1.3.1
 ```
+
+## Web Console
+https://github.com/OckiFals/web-console

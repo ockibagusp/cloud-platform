@@ -1,7 +1,7 @@
 # cloud-platform
 IoT Cloud-Platfrom Web API
 
-## Pyhton Dependencies
+# Pyhton Dependencies
 - This application require python packages written on `/requirements.txt`.
 - Listing:
 ```shell
@@ -17,5 +17,39 @@ django-cors-headers>=1.3.1
 paho-mqtt>=1.3.1
 ```
 
-## Web Console
-https://github.com/OckiFals/web-console
+# Preparation
+## Cloud-Platform (WebService)
+
+1. Clone repository from Github
+
+```bash
+$ git clone https://github.com/OckiFals/cloud-platform.git
+```
+
+## Web-Console (Single-Page Application)
+
+1. Clone repository from Github
+
+```bash
+$ git clone https://github.com/OckiFals/web-console.git
+```
+
+2. Change directory to cloned repo
+
+```bash
+$ cd /your-path/web-console
+```
+
+3. Install dependencies
+
+```bash
+$ npm install
+```
+
+4. Build
+
+```bash
+$ npm run prod-build
+```
+
+Build location: `/your-path/web-console/dist`

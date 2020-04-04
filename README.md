@@ -1,9 +1,9 @@
 # cloud-platform
 IoT Cloud-Platfrom Web API
 
-# Pyhton Dependencies
+# Python Dependencies
 
-### Pyhton 2.7.x
+### Python 2.7.x
 
 - This application require python packages written on `/requirements.txt`.
 - Listing:

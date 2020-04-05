@@ -3,8 +3,6 @@ IoT Cloud-Platfrom Web API
 
 # Python Dependencies
 
-### Python 2.7.x
-
 - This application require python packages written on `/requirements.txt`.
 - Listing:
 ```shell

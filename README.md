@@ -24,7 +24,7 @@ paho-mqtt>=1.3.1
 1. Clone repository from Github
 
 ```bash
-$ git clone https://github.com/OckiFals/cloud-platform.git
+$ git clone https://github.com/ockibagusp/cloud-platform.git
 ```
 
 ## Web-Console (Single-Page Application)
@@ -32,7 +32,7 @@ $ git clone https://github.com/OckiFals/cloud-platform.git
 1. Clone repository from Github
 
 ```bash
-$ git clone https://github.com/OckiFals/web-console.git
+$ git clone https://github.com/ockibagusp/web-console.git
 ```
 
 2. Change directory to cloned repo

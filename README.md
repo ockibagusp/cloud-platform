@@ -20,6 +20,7 @@ paho-mqtt>=1.3.1
 
 # Preparation
 ## Cloud-Platform (WebService)
+IoT Cloud-Platfrom Web API (Undergraduate Thesis).
 
 1. Clone repository from Github
 
@@ -28,6 +29,7 @@ $ git clone https://github.com/ockibagusp/cloud-platform.git
 ```
 
 ## Web-Console (Single-Page Application)
+Agrihub Cloud Platform Web Console; code with Angular4, CoreUI and ❤ (Undergraduate Thesis).
 
 1. Clone repository from Github
 

@@ -1,5 +1,5 @@
 # cloud-platform
-IoT Cloud-Platfrom Web API
+IoT Cloud-Platfrom Web API (Undergraduate Thesis).
 
 # Python Dependencies
 
